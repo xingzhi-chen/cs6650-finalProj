@@ -6,7 +6,7 @@ public class ServerMsg {
     private static final String MSG_TYPE = "msgType";
     private static final String FROM_USER = "fromUser";
     private static final String ROOM_ID = "roomID";
-    private static final String MSG = "msg";
+    private static final String MSG = "message";
 
     private final int msgType;
     private final String fromUser;

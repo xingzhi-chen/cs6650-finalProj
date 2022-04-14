@@ -16,6 +16,19 @@ public class Config {
     // timeout for server-server response inside cluster, 1 seconds
     public static final int CLUSTER_TIMEOUT = 1000;
 
+    // resCode for server response to client
+    public static final int SUCCESS = 1000;
+    public static final int NETWORK_ERROR = 1001;
+    public static final int DUP_USERNAME = 1002;
+    public static final int NO_MATCH = 1003;
+
+    public static final HashMap<Integer, String> errorMsg = new HashMap<>() {{
+        put(SUCCESS, "success");
+        put(NETWORK_ERROR, "internal server not available");
+        put(DUP_USERNAME, "username already exists");
+        put(NO_MATCH, "username or password does not match record");
+    }};
+
     // code identifying message type from server
     public static final int CHAT = 2001;
     public static final int INVITATION = 2002;
