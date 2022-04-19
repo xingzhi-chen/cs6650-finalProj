@@ -1,6 +1,8 @@
 package config;
 
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+//import org.json.JSONObject;
 
 public class ServerMsg {
     private static final String MSG_TYPE = "msgType";
@@ -12,6 +14,7 @@ public class ServerMsg {
     private final String fromUser;
     private final int roomID;
     private final String msg;
+    private final GsonBuilder builder = new GsonBuilder();
 
     public ServerMsg(int msgType, String fromUser, int roomID, String msg) {
         this.msgType = msgType;
@@ -21,19 +24,45 @@ public class ServerMsg {
     }
 
     public ServerMsg(String msgJSONStr) {
-        JSONObject obj = new JSONObject(msgJSONStr);
-        this.msgType = obj.getInt(MSG_TYPE);
-        this.fromUser = obj.getString(FROM_USER);
-        this.roomID = obj.getInt(ROOM_ID);
-        this.msg = obj.getString(MSG);
+        builder.serializeNulls();
+        Gson gson = builder.create();
+        ServerMsg serverMsg = gson.fromJson(msgJSONStr, ServerMsg.class);
+        this.msgType = serverMsg.getMsgType();
+        this.fromUser = serverMsg.getFromUser();
+        this.roomID = serverMsg.getRoomId();
+        this.msg = serverMsg.getMsg();
+//        JSONObject obj = new JSONObject(msgJSONStr);
+//        this.msgType = obj.getInt(MSG_TYPE);
+//        this.fromUser = obj.getString(FROM_USER);
+//        this.roomID = obj.getInt(ROOM_ID);
+//        this.msg = obj.getString(MSG);
     }
 
     public String toJSONString() {
-        JSONObject obj = new JSONObject();
-        obj.put(MSG_TYPE, msgType);
-        obj.put(FROM_USER, fromUser);
-        obj.put(ROOM_ID, roomID);
-        obj.put(MSG, msg);
-        return obj.toString();
+        builder.serializeNulls();
+        Gson gson = builder.create();
+        return gson.toJson(this);
+//        JSONObject obj = new JSONObject();
+//        obj.put(MSG_TYPE, msgType);
+//        obj.put(FROM_USER, fromUser);
+//        obj.put(ROOM_ID, roomID);
+//        obj.put(MSG, msg);
+//        return obj.toString();
+    }
+
+    public int getMsgType() {
+        return msgType;
+    }
+
+    public String getFromUser() {
+        return fromUser;
+    }
+
+    public int getRoomId() {
+        return roomID;
+    }
+
+    public String getMsg() {
+        return msg;
     }
 }
