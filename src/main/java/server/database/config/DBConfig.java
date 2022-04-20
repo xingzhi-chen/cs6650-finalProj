@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class DBConfig {
     // number of acceptors/proposers/learners in the cluster
     public static final int ACCEPTOR_SIZE = 5;
-    public static final int PROPOSER_SIZE = ServerConfig.CLUSTER_SIZE;
+    public static final int PROPOSER_SIZE = ServerConfig.DB_CLUSTER_SIZE;
     public static final int LEARNER_SIZE = 2;
     // majority amount
     public static final int QUORUM = ACCEPTOR_SIZE / 2 + 1;

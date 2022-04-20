@@ -1,7 +1,7 @@
 package server.database;
 
-import server.config.ReqBody;
-import server.config.RspBody;
+import server.config.DBReq;
+import server.config.DBRsp;
 import server.config.ServerConfig;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public abstract class AbsDBServer{
     public AbsDBServer() {}
 
     // perform the PUT action
-    private RspBody actionPut(String key, String value, boolean append, int timeout) {
+    private DBRsp actionPut(String key, String value, boolean append, int timeout) {
         lock.writeLock().lock();
         try {
 //            Log.Debug(String.format("start put %s", key));
@@ -50,12 +50,12 @@ public abstract class AbsDBServer{
 //            Log.Debug(String.format("end put %s", key));
         } finally {
             lock.writeLock().unlock();
-            return new RspBody(ServerConfig.SUCCESS, ServerConfig.errorMsg.get(ServerConfig.SUCCESS));
+            return new DBRsp(ServerConfig.SUCCESS, ServerConfig.errorMsg.get(ServerConfig.SUCCESS));
         }
     }
 
     // perform the GET operation, return error code if value does not exist
-    private RspBody actionGet(String key) {
+    private DBRsp actionGet(String key) {
         lock.readLock().lock();
         int resCode = ServerConfig.SUCCESS;
         ArrayList<String> val = null;
@@ -82,12 +82,12 @@ public abstract class AbsDBServer{
 //            Log.Debug(String.format("end get %s", key));
         } finally {
             lock.readLock().unlock();
-            return new RspBody(resCode, val, ServerConfig.errorMsg.get(resCode));
+            return new DBRsp(resCode, val, ServerConfig.errorMsg.get(resCode));
         }
     }
 
     // perform the DELETE operation, return error code if value does not exist
-    private RspBody actionDelete(String key) {
+    private DBRsp actionDelete(String key) {
         lock.writeLock().lock();
         int resCode = ServerConfig.SUCCESS;
         try {
@@ -100,13 +100,13 @@ public abstract class AbsDBServer{
 //            Log.Debug(String.format("end delete %s", key));
         } finally {
             lock.writeLock().unlock();
-            return new RspBody(resCode, ServerConfig.errorMsg.get(resCode));
+            return new DBRsp(resCode, ServerConfig.errorMsg.get(resCode));
         }
     }
 
     // parse the request body, and forward the content to different operation functions
-    protected String processReq(ReqBody reqBody) throws IOException {
-        RspBody rsp = null;
+    protected String processReq(DBReq reqBody) throws IOException {
+        DBRsp rsp = null;
         switch (reqBody.getAction()) {
             case ServerConfig.ACTION_PUT:
                 rsp = actionPut(reqBody.getKey(), reqBody.getValue(), reqBody.getAppend(), reqBody.getTimeout());
@@ -118,7 +118,7 @@ public abstract class AbsDBServer{
                 rsp = actionDelete(reqBody.getKey());
                 break;
             default:
-                rsp = new RspBody(ServerConfig.ERROR_NO_ACTION, ServerConfig.errorMsg.get(ServerConfig.ERROR_NO_ACTION));
+                rsp = new DBRsp(ServerConfig.ERROR_NO_ACTION, ServerConfig.errorMsg.get(ServerConfig.ERROR_NO_ACTION));
         }
         return rsp.toJSONString();
     }

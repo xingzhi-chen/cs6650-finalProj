@@ -1,10 +1,8 @@
 package server.database.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 //import org.json.JSONObject;
 import org.json.JSONObject;
-import server.config.ReqBody;
+import server.config.DBReq;
 
 public class Proposal {
     // values used for serialization
@@ -13,10 +11,10 @@ public class Proposal {
 
     private final long proposalID;
     // values of the client request
-    private final ReqBody reqBody;
+    private final DBReq reqBody;
 //    private final GsonBuilder builder = new GsonBuilder();
 
-    public Proposal(long proposalID, ReqBody reqBody) {
+    public Proposal(long proposalID, DBReq reqBody) {
         this.proposalID = proposalID;
         this.reqBody = reqBody;
     }
@@ -30,7 +28,7 @@ public class Proposal {
 //        this.reqBody = proposal.getReqBody();
         JSONObject obj = new JSONObject(JSONStr);
         proposalID = obj.getLong(PROPOSAL_ID);
-        reqBody = new ReqBody(obj.getString(REQ_BODY));
+        reqBody = new DBReq(obj.getString(REQ_BODY));
     }
 
     // serialize the proposal to JSON string for RMI communication
@@ -48,7 +46,7 @@ public class Proposal {
         return proposalID;
     }
 
-    public ReqBody getReqBody() {
+    public DBReq getReqBody() {
         return reqBody;
     }
 }

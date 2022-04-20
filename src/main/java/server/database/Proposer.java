@@ -2,8 +2,8 @@ package server.database;
 
 import server.database.config.DBConfig;
 import config.Log;
-import server.config.ReqBody;
-import server.config.RspBody;
+import server.config.DBReq;
+import server.config.DBRsp;
 import server.config.ServerConfig;
 import server.database.config.PAXOSPrepareResult;
 import server.database.config.Proposal;
@@ -37,7 +37,7 @@ public class Proposer {
     }
 
     public synchronized String sendPrepare(String req) {
-        ReqBody reqBody = new ReqBody(req);
+        DBReq reqBody = new DBReq(req);
         // transfer client request to proposal
         Proposal proposal = new Proposal(generateProposalID(), reqBody);
         // set the value to be proposed
@@ -75,11 +75,11 @@ public class Proposer {
         } else if (deniedCnt >= DBConfig.QUORUM) {
             // the proposal is not the latest and majority acceptor deny it
             Log.Error("Proposer %d does not get majority consensus when preparing %s", myServer.getServerID(), req);
-            return new RspBody(ServerConfig.REQ_OUTDATED, ServerConfig.errorMsg.get(ServerConfig.REQ_OUTDATED)).toJSONString();
+            return new DBRsp(ServerConfig.REQ_OUTDATED, ServerConfig.errorMsg.get(ServerConfig.REQ_OUTDATED)).toJSONString();
         } else {
             // the majority of acceptors suffer from network errors
             Log.Error("Proposer %d does not get majority consensus when preparing %s", myServer.getServerID(), req);
-            return new RspBody(ServerConfig.SERVER_ERROR, "Proposer does not get majority consensus").toJSONString();
+            return new DBRsp(ServerConfig.SERVER_ERROR, "Proposer does not get majority consensus").toJSONString();
         }
     }
 
@@ -114,11 +114,11 @@ public class Proposer {
             } else if (deniedCnt >= DBConfig.QUORUM) {
                 // the proposal is not the latest and majority acceptor deny it
                 Log.Error("Proposer %d does not get majority consensus", myServer.getServerID());
-                rsp = new RspBody(ServerConfig.REQ_OUTDATED, ServerConfig.errorMsg.get(ServerConfig.REQ_OUTDATED)).toJSONString();
+                rsp = new DBRsp(ServerConfig.REQ_OUTDATED, ServerConfig.errorMsg.get(ServerConfig.REQ_OUTDATED)).toJSONString();
             } else {
                 // the majority of acceptors suffer from network errors
                 Log.Error("Proposer %d does not get majority consensus", myServer.getServerID());
-                rsp = new RspBody(ServerConfig.SERVER_ERROR, "Proposer does not get majority consensus").toJSONString();
+                rsp = new DBRsp(ServerConfig.SERVER_ERROR, "Proposer does not get majority consensus").toJSONString();
             }
         } catch (IOException e) {
             // actually not gonna happen

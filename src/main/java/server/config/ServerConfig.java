@@ -1,6 +1,14 @@
 package server.config;
 
+import com.sun.net.httpserver.HttpExchange;
+import config.GlobalConfig;
+import org.json.JSONObject;
+
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 /*
 * Configurations for DB server and other servers
@@ -8,7 +16,10 @@ import java.util.HashMap;
 public class ServerConfig {
     // server registration prefix for rmiregistry, server 1 will be registered as RMIDBServer1
     public static final String RPC_DB_NAME = "RMIDBServer";
-    public static final int CLUSTER_SIZE = 2;
+    public static final String RPC_ROOM_NAME = "RMIRoomServer";
+    public static final String RPC_LOGIN_NAME = "RMILoginServer";
+    public static final int DB_CLUSTER_SIZE = 2;
+    public static final int ROOM_CLUSTER_SIZE = 3;
 
     // timeout for server-server response inside cluster, 1 seconds
     public static final int CLUSTER_TIMEOUT = 1000;

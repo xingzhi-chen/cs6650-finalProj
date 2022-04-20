@@ -2,8 +2,8 @@ package server.database;
 
 
 import org.junit.Test;
-import server.config.ReqBody;
-import server.config.RspBody;
+import server.config.DBReq;
+import server.config.DBRsp;
 import server.config.ServerConfig;
 
 import java.rmi.RemoteException;
@@ -28,16 +28,16 @@ public class DBServerTestClient {
     public void testPutNoAppend() throws RemoteException {
         String key = "key1";
         String value = "value1";
-        String req = new ReqBody(key, value, ServerConfig.ACTION_GET).toJSONString();
-        RspBody rspBody = new RspBody(db.DBRequest(req));
+        String req = new DBReq(key, value, ServerConfig.ACTION_GET).toJSONString();
+        DBRsp rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.ERROR_NO_EXIST);
 
-        req = new ReqBody(key, value, ServerConfig.ACTION_PUT).toJSONString();
-        rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, value, ServerConfig.ACTION_PUT).toJSONString();
+        rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.SUCCESS);
 
-        req = new ReqBody(key, ServerConfig.ACTION_GET).toJSONString();
-        rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_GET).toJSONString();
+        rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getValue().get(0).equals(value));
     }
 
@@ -47,13 +47,13 @@ public class DBServerTestClient {
         String value1 = "value1";
         String value2 = "value2";
 
-        String req = new ReqBody(key, value1, ServerConfig.ACTION_PUT).toJSONString();
+        String req = new DBReq(key, value1, ServerConfig.ACTION_PUT).toJSONString();
         db.DBRequest(req);
-        req = new ReqBody(key, value2, ServerConfig.ACTION_PUT, true).toJSONString();
+        req = new DBReq(key, value2, ServerConfig.ACTION_PUT, true).toJSONString();
         db.DBRequest(req);
 
-        req = new ReqBody(key, ServerConfig.ACTION_GET).toJSONString();
-        RspBody rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_GET).toJSONString();
+        DBRsp rspBody = new DBRsp(db.DBRequest(req));
         ArrayList<String> expValue = new ArrayList<>() {{
             add(value1);
             add(value2);
@@ -67,15 +67,15 @@ public class DBServerTestClient {
         String value1 = "value1";
         String value2 = "value2";
 
-        String req = new ReqBody(key, value1, ServerConfig.ACTION_PUT, true, 1).toJSONString();
+        String req = new DBReq(key, value1, ServerConfig.ACTION_PUT, true, 1).toJSONString();
         db.DBRequest(req);
         Thread.sleep(1500);
 
-        req = new ReqBody(key, value2, ServerConfig.ACTION_PUT, true).toJSONString();
+        req = new DBReq(key, value2, ServerConfig.ACTION_PUT, true).toJSONString();
         db.DBRequest(req);
 
-        req = new ReqBody(key, ServerConfig.ACTION_GET).toJSONString();
-        RspBody rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_GET).toJSONString();
+        DBRsp rspBody = new DBRsp(db.DBRequest(req));
         ArrayList<String> expValue = new ArrayList<>() {{
             add(value2);
         }};
@@ -87,20 +87,20 @@ public class DBServerTestClient {
         String key = "key1";
         String value = "value1";
 
-        String req = new ReqBody(key, value, ServerConfig.ACTION_PUT).toJSONString();
-        RspBody rspBody = new RspBody(db.DBRequest(req));
+        String req = new DBReq(key, value, ServerConfig.ACTION_PUT).toJSONString();
+        DBRsp rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.SUCCESS);
 
-        req = new ReqBody(key, ServerConfig.ACTION_GET).toJSONString();
-        rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_GET).toJSONString();
+        rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getValue().get(0).equals(value));
 
-        req = new ReqBody(key, ServerConfig.ACTION_DELETE).toJSONString();
-        rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_DELETE).toJSONString();
+        rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.SUCCESS);
 
-        req = new ReqBody(key, ServerConfig.ACTION_GET).toJSONString();
-        rspBody = new RspBody(db.DBRequest(req));
+        req = new DBReq(key, ServerConfig.ACTION_GET).toJSONString();
+        rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.ERROR_NO_EXIST);
     }
 }

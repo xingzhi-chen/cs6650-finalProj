@@ -11,7 +11,7 @@ import java.util.List;
 /*
 * functions for response body
  */
-public class RspBody {
+public class DBRsp {
     private final String RES_CODE = "resCode";
     private final String VALUE = "value";
     private final String MESSAGE = "message";
@@ -25,21 +25,21 @@ public class RspBody {
 //    private final GsonBuilder builder = new GsonBuilder();
 
     // response body without a value
-    public RspBody(int resCode, String message) {
+    public DBRsp(int resCode, String message) {
         this.resCode = resCode;
         this.value = null;
         this.message = message;
     }
 
     // response body with a value
-    public RspBody(int resCode, ArrayList<String> value, String message) {
+    public DBRsp(int resCode, ArrayList<String> value, String message) {
         this.resCode = resCode;
         this.value = value;
         this.message = message;
     }
 
     // parse the response body from a JSON string
-    public RspBody(String JSONStr) {
+    public DBRsp(String JSONStr) {
         JSONObject obj = new JSONObject(JSONStr);
         resCode = obj.getInt(RES_CODE);
         message = obj.getString(MESSAGE);

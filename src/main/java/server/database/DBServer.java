@@ -158,7 +158,7 @@ public class DBServer extends AbsDBServer implements DBInterface {
         String rsp = null;
         try {
             Log.Info("server %d receives from client(%s): %s", serverID, RemoteServer.getClientHost(), req);
-            ReqBody reqBody = new ReqBody(req);
+            DBReq reqBody = new DBReq(req);
             if (reqBody.getAction() == ServerConfig.ACTION_GET) {
                 // no PAXOS needed for GET operation
                 rsp = processReq(reqBody);
@@ -169,7 +169,7 @@ public class DBServer extends AbsDBServer implements DBInterface {
         } catch ( ServerNotActiveException | IOException exp) {
             Log.Error("server error: %s", exp.getMessage());
             exp.printStackTrace();
-            rsp = new RspBody(ServerConfig.SERVER_ERROR, exp.getMessage()).toJSONString();
+            rsp = new DBRsp(ServerConfig.SERVER_ERROR, exp.getMessage()).toJSONString();
         }
         Log.Info("server %d send to client: %s", serverID, rsp);
         return rsp;

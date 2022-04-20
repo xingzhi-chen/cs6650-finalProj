@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 /*
 * functions for request body
  */
-public class ReqBody {
+public class DBReq {
     // keys for JSON serialization/deserialization
     private final String KEY = "key";
     private final String VALUE = "value";
@@ -29,7 +29,7 @@ public class ReqBody {
 
 
     // request body without a value
-    public ReqBody(String key, int action) {
+    public DBReq(String key, int action) {
         this.key = key;
         this.value = null;
         this.action = action;
@@ -38,7 +38,7 @@ public class ReqBody {
     }
 
     // request body with a value
-    public ReqBody(String key, String value, int action) {
+    public DBReq(String key, String value, int action) {
         this.key = key;
         this.value = value;
         this.action = action;
@@ -46,7 +46,7 @@ public class ReqBody {
         this.timeout = -1;
     }
 
-    public ReqBody(String key, String value, int action, boolean append) {
+    public DBReq(String key, String value, int action, boolean append) {
         this.key = key;
         this.value = value;
         this.action = action;
@@ -54,7 +54,7 @@ public class ReqBody {
         this.timeout = -1;
     }
 
-    public ReqBody(String key, String value, int action, boolean append, int timeout) {
+    public DBReq(String key, String value, int action, boolean append, int timeout) {
         this.key = key;
         this.value = value;
         this.action = action;
@@ -63,7 +63,7 @@ public class ReqBody {
     }
 
     // deserialize the request body from JSON string
-    public ReqBody(String JSONStr) {
+    public DBReq(String JSONStr) {
         JSONObject obj = new JSONObject(JSONStr);
         this.key = obj.getString(KEY);
         this.action = obj.getInt(ACTION);
