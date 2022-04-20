@@ -15,4 +15,4 @@ fi
 
 mvn compile
 
-ln -s "$CUR_DIR/src/main/resources/$JSON_JAR" "$CUR_DIR/$TARGET/classes/$JSON_JAR"
+ln -s "$CUR_DIR/src/main/resources/." "$CUR_DIR/$TARGET/classes/"

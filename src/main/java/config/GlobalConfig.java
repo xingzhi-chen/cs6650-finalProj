@@ -32,10 +32,11 @@ public class GlobalConfig {
         put(DUP_USERNAME, "username already exists");
         put(NO_MATCH, "username or password does not match record");
         put(MISSING_ARGS, "missing request argument(s)");
-        put(NO_MATCH, "no such a room in the system");
+        put(NO_ROOM, "no such a room in the system");
     }};
 
     // code identifying message type from server
-    public static final int CHAT = 2001;
-    public static final int INVITATION = 2002;
+    public static final int SYSTEM = 2001;
+    public static final int CHAT = 2002;
+    public static final int INVITATION = 2003;
 }

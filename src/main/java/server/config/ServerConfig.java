@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class ServerConfig {
     // server registration prefix for rmiregistry, server 1 will be registered as RMIDBServer1
     public static final String RPC_DB_NAME = "RMIDBServer";
+    public static final String RPC_ROUTE_NAME = "RMIRouteServer";
     public static final String RPC_ROOM_NAME = "RMIRoomServer";
     public static final String RPC_LOGIN_NAME = "RMILoginServer";
     public static final int DB_CLUSTER_SIZE = 2;

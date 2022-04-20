@@ -1,6 +1,7 @@
 package server.route;
 
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 public interface RouteServerInterface extends Remote {
     /*
@@ -8,5 +9,5 @@ public interface RouteServerInterface extends Remote {
      * @param String toUser: the destination user of the message
      * @param String: the message from the inner server
      */
-    void sendMsgToClient(String toUser, String msg);
+    void sendMsgToClient(String toUser, String msg) throws RemoteException;
 }
