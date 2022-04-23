@@ -24,7 +24,7 @@ public class RoomServer implements RoomServerInterface {
     private static int roomServerID = 0;
     private static Registry registry;
 
-    public RoomServer(int port) throws RemoteException, NotBoundException {
+    public RoomServer() throws RemoteException, NotBoundException {
         dbHelper = new DBHelper();
         registry = LocateRegistry.getRegistry(host);
         RoomServerInterface stub = (RoomServerInterface) UnicastRemoteObject.exportObject(this, 0);
@@ -33,15 +33,13 @@ public class RoomServer implements RoomServerInterface {
 
     public static void main(String[] args) {
         try {
-//            if (args.length > 0){
-//            roomServerID = Integer.parseInt(args[0]);} else{
-//                roomServerID = 0;
-//            }
-
-            // roomServerPortNumber are 4000 / 4001 / 4002  //todo check use of port number
-            int roomServerPortNumber = roomServerPortNumberStarting + roomServerID;
-            RoomServer roomServer = new RoomServer(roomServerPortNumber);
-            Log.Info("roomServer "+roomServerID+" has started running on port " + roomServerPortNumber);
+            if (args.length > 0) {
+                roomServerID = Integer.parseInt(args[0]);
+            } else {
+                roomServerID = 0;
+            }
+            RoomServer roomServer = new RoomServer();
+            Log.Info("roomServer " + roomServerID + " is running...");
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
         }
@@ -61,15 +59,23 @@ public class RoomServer implements RoomServerInterface {
             roomIDExistCheckRsp = dbHelper.getRoomAddress(roomID);
         }
 
-        // after room is created successfully, add user to the roomUserList
+        // after room is created successfully, add user to roomUserList, add room to userRoomList
         if (dbHelper.updateRoomAddress(roomID, roomAddress) == ServerConfig.SUCCESS) {
-            if (dbHelper.addUserToRoom(roomID, username) != ServerConfig.SUCCESS){
-                throw new RemoteException();    //todo how to handle adding user failure
+            if (dbHelper.addUserToRoom(roomID, username) == ServerConfig.SUCCESS) {
+                if (dbHelper.addRoomToUser(username, roomID) == ServerConfig.SUCCESS) {
+                    return roomID;
+                } else {
+                    Log.Error("Error when adding roomID " + roomID + " to user " + username + "'s room list.");
+                    throw new RemoteException();
+                }
+            } else {
+                Log.Error("Error when adding user " + username + " to room " + roomID);
+                throw new RemoteException();
             }
         } else {
-            throw new RemoteException();    //todo how to handle room creation failure
+            Log.Error("Error when creating new room with roomID " + roomID);
+            throw new RemoteException();
         }
-        return roomID;
     }
 
     @Override

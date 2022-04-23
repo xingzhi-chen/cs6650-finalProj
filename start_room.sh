@@ -9,4 +9,11 @@ if [ ! -f "$LOG" ]; then
   echo "create room server log file"
   touch "$LOG"
 fi
-java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".RoomServer 2>&1 | tee "$LOG" &
+
+ROOM_SERVER_SIZE=3
+
+for (( i = 1; i <= ROOM_SERVER_SIZE; i++ ))
+do
+  java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".RoomServer "$i" 2>&1 | tee "$LOG" &
+  echo start room server "$i"
+done
