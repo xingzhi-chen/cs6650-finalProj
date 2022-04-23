@@ -25,6 +25,8 @@ public class GlobalConfig {
     public static final int NO_MATCH = 1003;
     public static final int MISSING_ARGS = 1004;
     public static final int NO_ROOM = 1005;
+    public static final int DUP_USER = 1006;
+    public static final int DECLINE = 1007;
 
     public static final HashMap<Integer, String> errorMsg = new HashMap<>() {{
         put(SUCCESS, "success");
@@ -33,6 +35,8 @@ public class GlobalConfig {
         put(NO_MATCH, "username or password does not match record");
         put(MISSING_ARGS, "missing request argument(s)");
         put(NO_ROOM, "no such a room in the system");
+        put(DUP_USER, "user is already in the room");
+        put(DECLINE, "invitation to room was declined");
     }};
 
     // code identifying message type from server
