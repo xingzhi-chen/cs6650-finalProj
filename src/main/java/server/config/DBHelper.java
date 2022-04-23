@@ -31,13 +31,28 @@ public class DBHelper {
         return "roomUserList." + roomID;
     }
 
+    private String userRoomListKey(String username) {
+        return "userRoomList." + username;
+    }
+
+    public int addNewUser(String username, String password) {
+        try {
+            DBReq reqBody = new DBReq(UsernameKey(username), password, ServerConfig.ACTION_PUT);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            Log.Error("Error " + exp.getMessage() + " when adding new user " + username);
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
     public int updateRoomAddress(int roomID, String address) {
         try {
             DBReq reqBody = new DBReq(roomAddrKey(roomID), address, ServerConfig.ACTION_PUT);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException exp) {
-            Log.Error("Error "+exp.getMessage()+" when updating room address with roomID "+roomID+" and address "+address);
+            Log.Error("Error " + exp.getMessage() + " when updating room address with roomID " + roomID + " and address " + address);
             return ServerConfig.SERVER_ERROR;
         }
     }
@@ -45,11 +60,21 @@ public class DBHelper {
     public int addUserToRoom(int roomID, String username) {
         try {
             DBReq reqBody = new DBReq(roomUserListKey(roomID), username, ServerConfig.ACTION_PUT, true);
-            // todo arraylist?
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException e) {
-            Log.Error("Error "+e.getMessage()+" when adding user "+username+" to room "+roomID);
+            Log.Error("Error " + e.getMessage() + " when adding user " + username + " to room " + roomID);
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    public int addRoomToUser(String username, int roomID) {
+        try {
+            DBReq reqBody = new DBReq(userRoomListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, true);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException e) {
+            Log.Error("Error " + e.getMessage() + " when adding room " + roomID + " to user " + username + "'s room list ");
             return ServerConfig.SERVER_ERROR;
         }
     }
@@ -64,19 +89,35 @@ public class DBHelper {
     }
 
     public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {
-        // todo: what value to use when perform get all
-        DBReq reqBody = new DBReq(roomUserListKey(roomID), null, ServerConfig.ACTION_GET, true);
+        DBReq reqBody = new DBReq(roomUserListKey(roomID), ServerConfig.ACTION_GET);
+        DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        return rspBody.getValue();
+    }
+
+    public ArrayList<String> getUserRoomList(String username) throws RemoteException {
+        DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
     }
 
     public int checkUsername(String username) {
         try {
-            DBReq reqBody = new DBReq(username, ServerConfig.ACTION_GET);
+            DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException exp) {
             return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    public boolean matchUsernamePassword(String username, String password) {
+        try {
+            DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return password.equals(rspBody.getValue());
+        } catch (RemoteException e) {
+            Log.Error("Error when checking password match for user " + username);
+            return false;
         }
     }
 }
