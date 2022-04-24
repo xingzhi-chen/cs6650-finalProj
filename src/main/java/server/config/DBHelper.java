@@ -35,6 +35,11 @@ public class DBHelper {
         return "userRoomList." + username;
     }
 
+    // invitation list user received
+    private String userInvitationListKey(String username) {
+        return "userInvitationList." + username;
+    }
+
     public int addNewUser(String username, String password) {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), password, ServerConfig.ACTION_PUT);
@@ -114,10 +119,38 @@ public class DBHelper {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-            return password.equals(rspBody.getValue());
+            return password.equals(rspBody.getValue().get(0));
         } catch (RemoteException e) {
             Log.Error("Error when checking password match for user " + username);
             return false;
         }
+    }
+
+    public int deleteInvitationHistory(String username, int roomID) {
+        try {
+            ArrayList<String> invitationHistory = getInvitationHistory(username);
+            invitationHistory.remove(String.valueOf(roomID));
+            return updateInvitationHistory(username, roomID, false);
+        } catch (Exception e) {
+            Log.Error("Error " + e.getMessage() + " when deleting invitation of " + roomID + " to user " + username + "'s room list ");
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    public int updateInvitationHistory(String username, int roomID, boolean append) {
+        try {
+            DBReq reqBody = new DBReq(userInvitationListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, append);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException e) {
+            Log.Error("Error " + e.getMessage() + " when adding invitation of " + roomID + " to user " + username + "'s room list ");
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    public ArrayList<String> getInvitationHistory(String username) throws RemoteException {
+        DBReq reqBody = new DBReq(userInvitationListKey(username), ServerConfig.ACTION_GET);
+        DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        return rspBody.getValue();
     }
 }

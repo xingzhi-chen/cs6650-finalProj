@@ -109,10 +109,29 @@ public class RoomServer implements RoomServerInterface {
         // receive invitation response from RouteServer(user)
         // add the roomID-username pair to database if invitation accepted
         if (accept) {
-            dbHelper.addUserToRoom(roomID, fromUser);
-            return GlobalConfig.SUCCESS;
+            // check if user can be added to the room
+            if (!dbHelper.getRoomUserList(roomID).contains(fromUser)) {
+                if (dbHelper.getInvitationHistory(fromUser).contains(String.valueOf(roomID))){
+                    dbHelper.addUserToRoom(roomID, fromUser);
+                    // delete invitation history
+                    dbHelper.deleteInvitationHistory(fromUser, roomID);
+                    return GlobalConfig.SUCCESS;
+                } else {
+                    Log.Error("The invitation to room "+ roomID+" does not exist in " + fromUser + " invitation history ");
+                    return GlobalConfig.NO_INVITATION;
+                }
+            } else {
+                Log.Error("The invitation recipient " + fromUser + " is already in the room " + roomID);
+                return GlobalConfig.DUP_USER;
+            }
         } else {
-            return GlobalConfig.DECLINE;
+            // delete invitation history
+            if (dbHelper.deleteInvitationHistory(fromUser, roomID)==ServerConfig.SUCCESS){
+                return GlobalConfig.DECLINE;
+            } else {
+                return GlobalConfig.SERVER_ERROR;
+            }
+
         }
     }
 
