@@ -46,7 +46,7 @@ public class DBHelper {
 
     public int checkUsername(String username) {
         try {
-            DBReq reqBody = new DBReq(username, ServerConfig.ACTION_GET);
+            DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch(RemoteException exp) {
