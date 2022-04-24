@@ -63,11 +63,11 @@ public class RouteServer implements RouteServerInterface {
 
             int httpPort = GlobalConfig.ROUTE_PORTS.get(serverID - 1);
             httpServer = HttpServer.create(new InetSocketAddress(httpPort), 0);
-            httpServer.createContext("/create_room", new CreateRoomHandler(dbHelper, registry));
-            httpServer.createContext("/send_msg", new SendMsgHandler(dbHelper, registry));
-            httpServer.createContext("/invite", new InvitationHandler(dbHelper, registry));
-            httpServer.createContext("/invitation_rsp", new InvitationRspHandler(dbHelper, registry));
-            httpServer.createContext("/get_chat_history", new GetChatHistoryHandler(dbHelper, registry));
+            httpServer.createContext(GlobalConfig.CREATE_ROOM_PROTOCOL, new CreateRoomHandler(dbHelper, registry));
+            httpServer.createContext(GlobalConfig.SEND_MSG_PROTOCOL, new SendMsgHandler(dbHelper, registry));
+            httpServer.createContext(GlobalConfig.INVITE_PROTOCOL, new InvitationHandler(dbHelper, registry));
+            httpServer.createContext(GlobalConfig.INVITATION_RSP_PROTOCOL, new InvitationRspHandler(dbHelper, registry));
+            httpServer.createContext(GlobalConfig.GET_HISTORY_PROTOCOL, new GetChatHistoryHandler(dbHelper, registry));
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
             httpServer.setExecutor(threadPoolExecutor);
             httpServer.start();

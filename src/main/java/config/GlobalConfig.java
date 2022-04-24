@@ -1,7 +1,5 @@
 package config;
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -63,4 +61,17 @@ public class GlobalConfig {
         add(8090);
         add(8091);
     }};
+    // protocols
+    public static final String LOGIN_PROTOCOL = "/login";
+    public static final String REGISTER_PROTOCOL = "/register";
+    public static final String CREATE_ROOM_PROTOCOL = "/create_room";
+    public static final String SEND_MSG_PROTOCOL= "/send_msg";
+    public static final String INVITE_PROTOCOL= "/invite";
+    public static final String INVITATION_RSP_PROTOCOL= "/invitation_rsp";
+    public static final String GET_HISTORY_PROTOCOL = "/get_chat_history";
+
+    // host and ports
+    public static final String IP_ADDRESS = "127.0.0.1";
+    public static final int ROUTE_SERVER_PORT = 8080;
+    public static final int LOGIN_SERVER_PORT = 8090;
 }
