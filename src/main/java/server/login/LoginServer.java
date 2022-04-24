@@ -1,31 +1,33 @@
 package server.login;
 
 import com.sun.net.httpserver.HttpServer;
+import config.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class LoginServer {
-    private boolean ifUsernameExist(String username) {
-        return true;
-    }
-
-    private boolean checkLoginMatch(String username, String password) {
-        return true;
+public class LoginServer implements LoginServerInterface{
+    public LoginServer() throws NotBoundException, RemoteException {
     }
 
     public static void main(String[] args) {
         try {
-            HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+            LoginServer loginServer = new LoginServer();
+
+            HttpServer server = HttpServer.create(new InetSocketAddress(8090), 0);
             server.createContext("/login", new LoginHandler());
             server.createContext("/register", new RegisterHandler());
 
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
             server.setExecutor(threadPoolExecutor);
             server.start();
-        } catch (IOException e) {
+            Log.Info("Login server started on port 8090");
+        } catch (IOException | NotBoundException e) {
             e.printStackTrace();
         }
     }

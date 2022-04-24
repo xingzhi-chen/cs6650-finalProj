@@ -1,5 +1,7 @@
 package server.login;
 
-public interface LoginServerInterface {
+import java.rmi.Remote;
+
+public interface LoginServerInterface extends Remote {
 
 }
