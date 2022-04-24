@@ -1,15 +1,9 @@
 package server.config;
 
-import com.google.gson.*;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.lang.reflect.Type;
-//import org.json.JSONException;
-//import org.json.JSONObject;
-
 /*
-* functions for request body
+* functions for database request body
  */
 public class DBReq {
     // keys for JSON serialization/deserialization
@@ -25,8 +19,6 @@ public class DBReq {
     private int action;
     private boolean append;
     private int timeout;
-//    private final GsonBuilder builder = new GsonBuilder();
-
 
     // request body without a value
     public DBReq(String key, int action) {
@@ -72,14 +64,6 @@ public class DBReq {
             this.append = obj.getBoolean(APPEND);
             this.timeout = obj.getInt(TIMEOUT);
         }
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        ReqBody reqBody = gson.fromJson(JSONStr, ReqBody.class);
-//        this.key = reqBody.getKey();
-//        this.value = reqBody.getValue();
-//        this.action = reqBody.getAction();
-//        this.append = reqBody.getAppend();
-//        this.timeout = reqBody.getTimeout();
     }
 
     // serialize the request body to JSON string
@@ -93,9 +77,6 @@ public class DBReq {
             obj.put(TIMEOUT, timeout);
         }
         return obj.toString();
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        return gson.toJson(this);
     }
 
     public String getKey() {

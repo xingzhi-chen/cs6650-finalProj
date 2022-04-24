@@ -1,15 +1,11 @@
 package server.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.json.JSONObject;
-//import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /*
-* functions for response body
+* functions for database response body
  */
 public class DBRsp {
     private final String RES_CODE = "resCode";
@@ -22,7 +18,6 @@ public class DBRsp {
     private final ArrayList<String> value;
     // detailed result message from the server
     private final String message;
-//    private final GsonBuilder builder = new GsonBuilder();
 
     // response body without a value
     public DBRsp(int resCode, String message) {
@@ -51,12 +46,6 @@ public class DBRsp {
         } else {
             value = null;
         }
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        RspBody rspBody = gson.fromJson(JSONStr, RspBody.class);
-//        this.resCode = rspBody.getResCode();
-//        this.value = rspBody.getValue();
-//        this.message = rspBody.getMessage();
     }
 
     // serialize the response body to a JSON string
@@ -68,9 +57,6 @@ public class DBRsp {
             obj.put(VALUE, value);
         }
         return obj.toString();
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        return gson.toJson(this);
     }
 
     // helper function for log

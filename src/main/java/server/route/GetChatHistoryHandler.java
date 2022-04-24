@@ -1,9 +1,7 @@
 package server.route;
 
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import config.GlobalConfig;
-import config.Log;
 import org.json.JSONObject;
 import server.config.DBHelper;
 import server.config.DBRsp;
@@ -15,20 +13,19 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 
-public class InvitationHandler extends AbsRouteSvrHandler {
-    public InvitationHandler(DBHelper dbHelper, Registry registry) {
+public class GetChatHistoryHandler extends AbsRouteSvrHandler {
+    public GetChatHistoryHandler(DBHelper dbHelper, Registry registry) {
         super(dbHelper, registry);
     }
 
     @Override
     public void processReq(HttpExchange exchange, JSONObject body, String username) {
-        if (!body.has(GlobalConfig.ROOM_ID) || !body.has(GlobalConfig.NEW_USER)) {
+        if (!body.has(GlobalConfig.ROOM_ID)) {
             ServerHelper.writeWrongReqRsp(exchange);
             return;
         }
 
         int roomID = body.getInt(GlobalConfig.ROOM_ID);
-        String newUser = body.getString(GlobalConfig.NEW_USER);
         DBRsp dbRsp = dbHelper.getRoomAddress(roomID);
         if (dbRsp.getResCode() == ServerConfig.ERROR_NO_EXIST) {
             ServerHelper.writeNoRoomRsp(exchange);
@@ -39,13 +36,12 @@ public class InvitationHandler extends AbsRouteSvrHandler {
         try {
             // the room server is available, send message
             RoomServerInterface roomServer = (RoomServerInterface) registry.lookup(addr);
-            int resCode = roomServer.receiveInvitation(username, newUser, roomID);
-            switch(resCode) {
-                case GlobalConfig.NO_MATCH: ServerHelper.writeNoMatchRsp(exchange); break;
-                case GlobalConfig.NO_ROOM: ServerHelper.writeNoRoomRsp(exchange); break;
-                case GlobalConfig.DUP_USER: ServerHelper.writeDupUserRoomRsp(exchange); break;
-                default: ServerHelper.writeDefaultSuccessRsp(exchange); break;
-            }
+            String history = roomServer.getChatHistory(roomID);
+            String rsp = new JSONObject()
+                    .put(GlobalConfig.RES_CODE, GlobalConfig.SUCCESS)
+                    .put(GlobalConfig.MESSAGE, GlobalConfig.errorMsg.get(GlobalConfig.SUCCESS))
+                    .put(GlobalConfig.HISTORY, history)
+                    .toString();
             return;
         } catch (NotBoundException | RemoteException e) {
             e.printStackTrace();

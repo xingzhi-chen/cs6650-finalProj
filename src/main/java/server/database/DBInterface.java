@@ -7,7 +7,8 @@ import java.rmi.RemoteException;
 public interface DBInterface extends Remote {
     /*
     * database operation request
-    * @param String req: a JSON string of client request
+    * @param String req: a JSON string of DBReq
+    * @return String: a JSON of DBRsp
      */
     String DBRequest(String req) throws RemoteException;
 }

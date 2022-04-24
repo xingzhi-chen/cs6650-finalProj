@@ -8,33 +8,43 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.Random;
 
+/*
+* helper functions for db operations
+ */
 public class DBHelper {
     private DBInterface db;
 
+    // randomly choose a db proposer as the stub
     public DBHelper() throws RemoteException, NotBoundException {
         String host = "127.0.0.1";
         Registry registry = LocateRegistry.getRegistry(host);
-        int serverID = 1;
+        int serverID = new Random().nextInt() > 0? 1 : 2;
         db = (DBInterface) registry.lookup(ServerConfig.RPC_DB_NAME + serverID);
     }
 
+    // key for address of a room
     private String roomAddrKey(int roomID) {
         return "roomAddr." + roomID;
     }
 
+    // key for password of a username
     private String UsernameKey(String username) {
         return "username." + username;
     }
 
+    // key for user list of a room
     private String roomUserListKey(int roomID) {
         return "roomUserList." + roomID;
     }
 
+    // key for room list of a user
     private String userRoomListKey(String username) {
         return "userRoomList." + username;
     }
 
+    // add a new user with his/her password to the system
     public int addNewUser(String username, String password) {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), password, ServerConfig.ACTION_PUT);
@@ -46,6 +56,7 @@ public class DBHelper {
         }
     }
 
+    // update the address of a room
     public int updateRoomAddress(int roomID, String address) {
         try {
             DBReq reqBody = new DBReq(roomAddrKey(roomID), address, ServerConfig.ACTION_PUT);
@@ -57,6 +68,7 @@ public class DBHelper {
         }
     }
 
+    // add new user to a room
     public int addUserToRoom(int roomID, String username) {
         try {
             DBReq reqBody = new DBReq(roomUserListKey(roomID), username, ServerConfig.ACTION_PUT, true);
@@ -68,6 +80,7 @@ public class DBHelper {
         }
     }
 
+    // add roomID to user's room list
     public int addRoomToUser(String username, int roomID) {
         try {
             DBReq reqBody = new DBReq(userRoomListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, true);
@@ -79,6 +92,7 @@ public class DBHelper {
         }
     }
 
+    // get address (which RoomServer the room is on) of a room
     public DBRsp getRoomAddress(int roomID) {
         try {
             DBReq reqBody = new DBReq(roomAddrKey(roomID), ServerConfig.ACTION_GET);
@@ -88,18 +102,21 @@ public class DBHelper {
         }
     }
 
+    // get the users of a room
     public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {
         DBReq reqBody = new DBReq(roomUserListKey(roomID), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
     }
 
+    // get the rooms a user is in
     public ArrayList<String> getUserRoomList(String username) throws RemoteException {
         DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
     }
 
+    // check if username exists
     public int checkUsername(String username) {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
@@ -110,6 +127,7 @@ public class DBHelper {
         }
     }
 
+    // check if the password matches the one in the record
     public boolean matchUsernamePassword(String username, String password) {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), ServerConfig.ACTION_GET);
@@ -118,6 +136,34 @@ public class DBHelper {
         } catch (RemoteException e) {
             Log.Error("Error when checking password match for user " + username);
             return false;
+        }
+    }
+
+    // get the ID of the RouteServer that is acting as the master
+    public int getMasterRouteID() {
+        try {
+            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, ServerConfig.ACTION_GET);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            if (rspBody.getResCode() == ServerConfig.ERROR_NO_EXIST) {
+                return ServerConfig.ERROR_NO_EXIST;
+            } else {
+                return Integer.parseInt(rspBody.getValue().get(0));
+            }
+        } catch (RemoteException e) {
+            Log.Error("fail to connect to db when reading master route ID");
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    // mark RouteServer of ID myID as the master server
+    public int updateMasterRouteID(Integer myID) {
+        try {
+            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, myID.toString(), ServerConfig.ACTION_PUT, false, 1);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException e) {
+            Log.Error("fail to connect to db when reading master route ID");
+            return ServerConfig.SERVER_ERROR;
         }
     }
 }

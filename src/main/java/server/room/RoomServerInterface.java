@@ -43,4 +43,11 @@ public interface RoomServerInterface extends Remote {
      * @param int roomID: the room ID of the message
      */
     void receiveMsg(String fromUser, String msg, int roomID) throws RemoteException, NotBoundException;
+
+    /*
+     * get recent (1 hour) chat history of a chat room
+     * @param int roomID: the room ID of the chat room
+     * @return: a JSON array string of ServerMsg JSON string
+     */
+    String getChatHistory(int roomID) throws RemoteException;
 }

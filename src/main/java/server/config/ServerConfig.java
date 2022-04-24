@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 /*
-* Configurations for DB server and other servers
+* Configurations shared among all servers
  */
 public class ServerConfig {
     // server registration prefix for rmiregistry, server 1 will be registered as RMIDBServer1
