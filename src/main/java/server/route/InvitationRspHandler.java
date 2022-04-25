@@ -20,6 +20,10 @@ public class InvitationRspHandler extends AbsRouteSvrHandler {
 
     @Override
     public void processReq(HttpExchange exchange, JSONObject body, String username) {
+        if (!body.has(GlobalConfig.ROOM_ID)) {
+            ServerHelper.writeWrongReqRsp(exchange);
+            return;
+        }
         int roomID = body.getInt(GlobalConfig.ROOM_ID);
         boolean accept = body.getBoolean(GlobalConfig.ACCEPT);
 
@@ -33,7 +37,7 @@ public class InvitationRspHandler extends AbsRouteSvrHandler {
         try {
             // the room server is available, send message
             RoomServerInterface roomServer = (RoomServerInterface) registry.lookup(addr);
-            roomServer.receiveInvitationRsp(username, roomID, accept);
+            int resCode = roomServer.receiveInvitationRsp(username, roomID, accept);
             ServerHelper.writeDefaultSuccessRsp(exchange);
             return;
         } catch (NotBoundException | RemoteException e) {

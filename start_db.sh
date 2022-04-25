@@ -24,7 +24,7 @@ do
     echo "create proposer ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" 2>&1 | tee "$LOG" &
+  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" &>"$LOG" &
   echo start proposer "$i" "$port"
 done
 
@@ -36,7 +36,7 @@ do
     echo "create learner ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Learner "$i" 2>&1 | tee "$LOG" &
+  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Learner "$i" &>"$LOG" &
   echo start learner "$i" "$port"
 done
 
@@ -48,6 +48,6 @@ do
     echo "create acceptor ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Acceptor "$i" "$FAILURE_TYPE" 2>&1 | tee "$LOG" &
+  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Acceptor "$i" &>"$LOG" &
   echo start acceptor "$i" "$port"
 done

@@ -15,4 +15,4 @@ fi
 
 mvn compile
 
-ln -s "$CUR_DIR/src/main/resources/." "$CUR_DIR/$TARGET/classes/"
+ln -s "$CUR_DIR/src/main/resources/." "$CUR_DIR/$TARGET/classes"

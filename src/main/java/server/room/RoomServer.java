@@ -174,7 +174,8 @@ public class RoomServer implements RoomServerInterface {
     }
 
     @Override
-    public ArrayList<String> getChatHistory(String username, int roomID) throws RemoteException {
+
+    public String getChatHistory(int roomID) throws RemoteException {
         return null;
     }
 }
