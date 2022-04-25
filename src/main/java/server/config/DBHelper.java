@@ -11,8 +11,9 @@ import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Random;
 
+
 /*
-* helper functions for db operations
+ * helper functions for db operations
  */
 public class DBHelper {
     private DBInterface db;
@@ -43,6 +44,16 @@ public class DBHelper {
     // key for room list of a user
     private String userRoomListKey(String username) {
         return "userRoomList." + username;
+    }
+
+    // invitation list user received
+    private String userInvitationListKey(String username) {
+        return "userInvitationList." + username;
+    }
+
+    // chat messages history in a room
+    private String roomChatHistoryKey(int roomID) {
+        return "roomChatHistory." + roomID;
     }
 
     // add a new user with his/her password to the system
@@ -94,6 +105,29 @@ public class DBHelper {
         }
     }
 
+    // get room chat history of a room
+    public DBRsp getRoomChatHistory(int roomID){
+        try {
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
+    }
+
+    // get room chat history of a room
+    public int addRoomChatHistory(int roomID, String chatMessage){
+        try {
+            // chat messages are stored in history for 3600sec (1hr)
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), chatMessage, ServerConfig.ACTION_PUT, true, 3600);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            Log.Error("Error " + exp.getMessage() + " when adding chat message to room " + roomID);
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
     // get address (which RoomServer the room is on) of a room
     public DBRsp getRoomAddress(int roomID) {
         try {
@@ -104,18 +138,33 @@ public class DBHelper {
         }
     }
 
-    // get the users of a room
+    // get the users list of a room
     public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {
         DBReq reqBody = new DBReq(roomUserListKey(roomID), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-        return rspBody.getValue();
+        return rspBody.getValue();  // exception will be handled in server.route.SendMsgHandler
     }
 
-    // get the rooms a user is in
-    public ArrayList<String> getUserRoomList(String username) throws RemoteException {
-        DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
-        DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-        return rspBody.getValue();
+    // get the rooms list a user is in
+    public DBRsp getUserRoomList(String username) throws RemoteException {
+        try {
+            DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
+    }
+
+    // get the rooms list a user is in
+    public int initUserRoomList(String username) throws RemoteException {
+        try {
+            // init first roomID as placeholder '0'
+            DBReq reqBody = new DBReq(userRoomListKey(username), "0",ServerConfig.ACTION_PUT);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            return ServerConfig.SERVER_ERROR;
+        }
     }
 
     // check if username exists
@@ -138,6 +187,47 @@ public class DBHelper {
         } catch (RemoteException e) {
             Log.Error("Error when checking password match for user " + username);
             return false;
+        }
+    }
+
+    // add room invitation to a user's invitation history
+    public int addInvitationHistory(String username, int roomID) {
+        try {
+            DBReq reqBody = new DBReq(userInvitationListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, true);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException e) {
+            Log.Error("Error " + e.getMessage() + " when adding invitation of " + roomID + " to user " + username + "'s room list ");
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    // get room invitation of a user's invitation history
+    public DBRsp getInvitationHistory(String username) throws RemoteException {
+        try {
+            DBReq reqBody = new DBReq(userInvitationListKey(username), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
+    }
+
+    // delete an invitation entry from user's invitation history
+    public int deleteInvitationHistory(String username, int roomID) {
+        try {
+            DBRsp invitationHistoryRsp = getInvitationHistory(username);
+            ArrayList<String> invitationHistory = invitationHistoryRsp.getValue();
+            invitationHistory.remove(String.valueOf(roomID));
+            // update invitation history
+            for (String invitationRoom:invitationHistory){
+                if (addInvitationHistory(username, Integer.parseInt(invitationRoom))==ServerConfig.SERVER_ERROR){
+                    return ServerConfig.SERVER_ERROR;
+                }
+            }
+            return ServerConfig.SUCCESS;
+        } catch (Exception e) {
+            Log.Error("Error " + e.getMessage() + " when deleting invitation of " + roomID + " to user " + username + "'s room list ");
+            return ServerConfig.SERVER_ERROR;
         }
     }
 
