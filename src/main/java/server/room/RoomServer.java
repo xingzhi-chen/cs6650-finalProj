@@ -36,7 +36,7 @@ public class RoomServer implements RoomServerInterface {
         RoomServerInterface stub = (RoomServerInterface) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(ServerConfig.RPC_ROOM_NAME, stub);
         // get roomServerID
-        if (args.length > 0) {
+        if (args.length > 0 && args[0].length() == 1) {
             roomServerID = Integer.parseInt(args[0]);
         } else {
             roomServerID = 0;   // default roomServerID 0
