@@ -118,7 +118,8 @@ public class DBHelper {
     // get room chat history of a room
     public int addRoomChatHistory(int roomID, String chatMessage){
         try {
-            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), chatMessage, ServerConfig.ACTION_PUT, true);
+            // chat messages are stored in history for 3600sec (1hr)
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), chatMessage, ServerConfig.ACTION_PUT, true, 3600);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException exp) {
@@ -152,7 +153,18 @@ public class DBHelper {
         } catch (RemoteException exp) {
             return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
         }
+    }
 
+    // get the rooms list a user is in
+    public int initUserRoomList(String username) throws RemoteException {
+        try {
+            // init first roomID as placeholder '0'
+            DBReq reqBody = new DBReq(userRoomListKey(username), "0",ServerConfig.ACTION_PUT);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            return ServerConfig.SERVER_ERROR;
+        }
     }
 
     // check if username exists

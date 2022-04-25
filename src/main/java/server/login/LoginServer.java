@@ -17,15 +17,14 @@ public class LoginServer implements LoginServerInterface{
     }
 
     public static void main(String[] args) {
-//        if (args.length < 1 || args[0].length() == 0) {
-//            Log.Error("missing Login ID, process stop....");
-//            System.exit(1);
- //       }
-        int port = 8090;
+        if (args.length < 1 || args[0].length() == 0) {
+            Log.Error("missing Login ID, process stop....");
+            System.exit(1);
+        }
         try {
             LoginServer loginServer = new LoginServer();
 
-//            int port = GlobalConfig.LOGIN_PORTS.get(Integer.parseInt(args[0]) - 1);
+            int port = GlobalConfig.LOGIN_PORTS.get(Integer.parseInt(args[0]) - 1);
             HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/login", new LoginHandler());
             server.createContext("/register", new RegisterHandler());

@@ -46,6 +46,7 @@ public class LoginHandler implements HttpHandler {
                 DBRsp getUserRoomListRsp = dbHelper.getUserRoomList(username);
                 if (getUserRoomListRsp.getResCode() == ServerConfig.SUCCESS) {
                     ArrayList<String> userRoomList = getUserRoomListRsp.getValue();
+                    userRoomList.remove(0); // first roomID is a placeholder created during registration
                     // return token and roomList in response
                     String rsp = new JSONObject()
                             .put(GlobalConfig.RES_CODE, GlobalConfig.SUCCESS)
