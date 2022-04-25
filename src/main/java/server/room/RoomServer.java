@@ -2,12 +2,14 @@ package server.room;
 
 import config.GlobalConfig;
 import config.Log;
+import org.json.JSONObject;
 import server.config.DBHelper;
 import server.config.DBRsp;
 import server.config.ServerConfig;
 import server.route.RouteServerInterface;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -24,11 +26,11 @@ public class RoomServer implements RoomServerInterface {
     private static int roomServerID = 0;
     private static Registry registry;
 
-    public RoomServer() throws RemoteException, NotBoundException {
+    public RoomServer(int roomServerID) throws RemoteException, NotBoundException {
         dbHelper = new DBHelper();
         registry = LocateRegistry.getRegistry(host);
         RoomServerInterface stub = (RoomServerInterface) UnicastRemoteObject.exportObject(this, 0);
-        registry.rebind(ServerConfig.RPC_ROOM_NAME, stub);
+        registry.rebind(ServerConfig.RPC_ROOM_NAME + roomServerID, stub);
     }
 
     public static void main(String[] args) {
@@ -38,7 +40,7 @@ public class RoomServer implements RoomServerInterface {
             } else {
                 roomServerID = 0;
             }
-            RoomServer roomServer = new RoomServer();
+            RoomServer roomServer = new RoomServer(roomServerID);
             Log.Info("roomServer " + roomServerID + " is running...");
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
@@ -129,6 +131,10 @@ public class RoomServer implements RoomServerInterface {
 
     @Override
     public String getChatHistory(int roomID) throws RemoteException {
-        return null;
+        ArrayList<String> history = new ArrayList<>() {{
+            add("record1");
+        }};
+        String res = new JSONObject().put(GlobalConfig.HISTORY, history).toString();
+        return res;
     }
 }
