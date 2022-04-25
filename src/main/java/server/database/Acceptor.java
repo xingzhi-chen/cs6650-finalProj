@@ -39,7 +39,7 @@ public class Acceptor implements RMIAcceptorInterface {
         long proposalID = proposal.getProposalID();
         // key of the data the proposal is editing
         String pKey = proposal.getReqBody().getKey();
-        Log.Debug("Acceptor %d receive prepare request for proposalID %d of key %s", myServer.getServerID(), proposalID, pKey);
+//        Log.Debug("Acceptor %d receive prepare request for proposalID %d of key %s", myServer.getServerID(), proposalID, pKey);
         String rsp = null;
         lock.lock();
         if (!promisedIDs.containsKey(pKey) || promisedIDs.get(pKey) < proposalID) {
@@ -49,7 +49,7 @@ public class Acceptor implements RMIAcceptorInterface {
             promisedIDs.put(pKey, proposalID);
             // include previously accepted proposal ID and value in the result
             if (acceptedIDs.containsKey(pKey)) {
-                Log.Debug("Acceptor %d has accepted proposalID %d of key %s", myServer.getServerID(), acceptedIDs.get(pKey), pKey);
+//                Log.Debug("Acceptor %d has accepted proposalID %d of key %s", myServer.getServerID(), acceptedIDs.get(pKey), pKey);
                 rsp = new PAXOSPrepareResult(acceptedIDs.get(pKey), acceptedProposals.get(pKey), DBConfig.PROMISED).toJSONString();
             } else {
                 rsp = new PAXOSPrepareResult(0, null, DBConfig.PROMISED).toJSONString();

@@ -23,6 +23,7 @@ public class RouteServer implements RouteServerInterface {
     private WebSocketHandler webSocketHandler;
     private HttpServer httpServer;
     private final Timer timer;
+    private boolean isListening = false;
 
     private class RaceForLeaderTask extends TimerTask {
         private final int myID;
@@ -42,6 +43,9 @@ public class RouteServer implements RouteServerInterface {
                 }
             } else if (curID == myID) {
                 dbHelper.updateMasterRouteID(myID);
+                if (!isListening) {
+                    listen();
+                }
             }
         }
     }
@@ -49,10 +53,9 @@ public class RouteServer implements RouteServerInterface {
     public RouteServer(int serverID) throws NotBoundException, RemoteException {
         Log.Info("start Route Server %d", serverID);
         this.serverID = serverID;
-//        RaceForLeaderTask leaderTask = new RaceForLeaderTask(serverID);
+        RaceForLeaderTask leaderTask = new RaceForLeaderTask(serverID);
         timer = new Timer();
-//        timer.scheduleAtFixedRate(leaderTask, 0, 30);
-        listen();
+        timer.scheduleAtFixedRate(leaderTask, 0, 1000 * ServerConfig.MASTER_TIMEOUT_INTERVAL / 2);
     }
 
     public boolean listen() {
@@ -77,9 +80,11 @@ public class RouteServer implements RouteServerInterface {
             int websocketPort = GlobalConfig.WEBSOCKET_PORTS.get(serverID - 1);
             webSocketHandler = new WebSocketHandler(dbHelper, websocketPort);
             webSocketHandler.start();
+            isListening = true;
             return true;
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
+            isListening = false;
             return false;
         }
     }

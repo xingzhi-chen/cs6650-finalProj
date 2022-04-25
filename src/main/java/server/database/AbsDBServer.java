@@ -48,7 +48,7 @@ public abstract class AbsDBServer{
                 timestamp = new Date().getTime() + timeout * 1000;
             }
             database.get(key).add(new Pair(timestamp, value));
-            Log.Debug(String.format("end put %s, %s, %s, %d", key, value, append, timeout));
+//            Log.Debug(String.format("end put %s, %s, %s, %d", key, value, append, timeout));
         } finally {
             lock.writeLock().unlock();
             return new DBRsp(ServerConfig.SUCCESS, ServerConfig.errorMsg.get(ServerConfig.SUCCESS));

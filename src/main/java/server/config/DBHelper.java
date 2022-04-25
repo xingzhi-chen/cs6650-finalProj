@@ -45,6 +45,11 @@ public class DBHelper {
         return "userRoomList." + username;
     }
 
+    // key for unsent system message list of a user
+    private String userMsgKey(String username) {
+        return "userWebSocketMsg." + username;
+    }
+
     // add a new user with his/her password to the system
     public int addNewUser(String username, String password) {
         try {
@@ -160,12 +165,41 @@ public class DBHelper {
     // mark RouteServer of ID myID as the master server
     public int updateMasterRouteID(Integer myID) {
         try {
-            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, myID.toString(), ServerConfig.ACTION_PUT, false, 60);
+            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, myID.toString(), ServerConfig.ACTION_PUT, false, ServerConfig.MASTER_TIMEOUT_INTERVAL);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException e) {
             Log.Error("fail to connect to db when updating master route ID to %d", myID);
             return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    public void saveUnsentMsg(String username, String msg) {
+        try {
+            DBReq reqBody = new DBReq(userMsgKey(username), msg, ServerConfig.ACTION_PUT, true);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException e) {
+            Log.Error("fail to store unsent msg %s of user %s", msg, username);
+        }
+    }
+
+    public ArrayList<String> getUnsentMsg(String username) {
+        try {
+            DBReq reqBody = new DBReq(userMsgKey(username), ServerConfig.ACTION_GET);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getValue();
+        } catch (RemoteException e) {
+            Log.Error("fail to get unsent msg of user %s", username);
+            return null;
+        }
+    }
+
+    public void clearSavedMsg(String username) {
+        try {
+            DBReq reqBody = new DBReq(userMsgKey(username), ServerConfig.ACTION_DELETE);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException e) {
+            Log.Error("fail to clear unsent msg of user %s", username);
         }
     }
 }

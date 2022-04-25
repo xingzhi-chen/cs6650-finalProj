@@ -11,7 +11,9 @@ import server.config.ServerHelper;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /*
 * Handler for websocket connection
@@ -21,12 +23,14 @@ public class WebSocketHandler extends WebSocketServer {
     private final HashMap<String, WebSocket> sockets;
     // HashMap of username to address
     private final HashMap<String, String> remoteAddrs;
+    private final HashSet<String> registeredUsers;
     private final DBHelper dbHelper;
 
     public WebSocketHandler(DBHelper dbHelper, int port) {
         super(new InetSocketAddress(port));
         sockets = new HashMap<>();
         remoteAddrs = new HashMap<>();
+        registeredUsers = new HashSet<>();
         this.dbHelper = dbHelper;
     }
 
@@ -34,6 +38,11 @@ public class WebSocketHandler extends WebSocketServer {
     public void sendMsgToClient(String toUser, String msg) throws IOException {
         if (sockets.containsKey(toUser) && sockets.get(toUser).isOpen()) {
             sockets.get(toUser).send(msg);
+        } else {
+            if (registeredUsers.contains(toUser) || dbHelper.checkUsername(toUser) == ServerConfig.SUCCESS) {
+                registeredUsers.add(toUser);
+                dbHelper.saveUnsentMsg(toUser, msg);
+            }
         }
     }
 
@@ -76,9 +85,14 @@ public class WebSocketHandler extends WebSocketServer {
         }
 
         webSocket.send(new ServerMsg(GlobalConfig.SYSTEM, "", 0, String.valueOf(GlobalConfig.SUCCESS)).toJSONString());
+        ArrayList<String> prevMsgs = dbHelper.getUnsentMsg(username);
+        for(String msg : prevMsgs) {
+            webSocket.send(msg);
+        }
         // add socket-user info to map
         sockets.put(username, webSocket);
         remoteAddrs.put(webSocket.getRemoteSocketAddress().toString(), username);
+        registeredUsers.add(username);
     }
 
     @Override
