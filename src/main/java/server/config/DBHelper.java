@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DBHelper {
     private DBInterface db;
@@ -39,6 +40,9 @@ public class DBHelper {
     private String userInvitationListKey(String username) {
         return "userInvitationList." + username;
     }
+
+    // chat messages history in a room
+    private String roomChatHistoryKey(int roomID){return "roomChatHistory."+roomID;}
 
     public int addNewUser(String username, String password) {
         try {
@@ -84,6 +88,17 @@ public class DBHelper {
         }
     }
 
+    // todo
+//    public ArrayList<String> getRoomChatHistory(int roomID){
+//        try {
+//            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), ServerConfig.ACTION_GET);
+//            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+//            return rspBody.getValue();
+//        } catch (RemoteException exp) {
+//            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+//        }
+//    }
+
     public DBRsp getRoomAddress(int roomID) {
         try {
             DBReq reqBody = new DBReq(roomAddrKey(roomID), ServerConfig.ACTION_GET);
@@ -93,13 +108,13 @@ public class DBHelper {
         }
     }
 
-    public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {
+    public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {   //todo change return type
         DBReq reqBody = new DBReq(roomUserListKey(roomID), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
     }
 
-    public ArrayList<String> getUserRoomList(String username) throws RemoteException {
+    public ArrayList<String> getUserRoomList(String username) throws RemoteException { //todo change return type
         DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
@@ -153,4 +168,6 @@ public class DBHelper {
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
         return rspBody.getValue();
     }
+
+
 }

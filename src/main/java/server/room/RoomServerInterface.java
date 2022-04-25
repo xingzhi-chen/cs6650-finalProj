@@ -3,6 +3,7 @@ package server.room;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 public interface RoomServerInterface extends Remote {
     /*
@@ -43,4 +44,12 @@ public interface RoomServerInterface extends Remote {
      * @param int roomID: the room ID of the message
      */
     void receiveMsg(String fromUser, String msg, int roomID) throws RemoteException, NotBoundException;
+
+    /*
+     * receive getChatHistory request with roomID from RouteServer(user),
+     * get chat history from database and return to RouteServer
+     * @param String username: the user that requires the chat history
+     * @param int roomID: the room ID of the message
+     */
+    ArrayList<String> getChatHistory(String username, int roomID) throws RemoteException;
 }

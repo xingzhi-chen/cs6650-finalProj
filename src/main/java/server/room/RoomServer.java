@@ -8,37 +8,43 @@ import server.config.ServerConfig;
 import server.route.RouteServerInterface;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class RoomServer implements RoomServerInterface {
     private static DBHelper dbHelper;
     private static final String host = "127.0.0.1";
-    private static final int roomServerPortNumberStarting = 4000;
     private static final int roomIDUpperBound = 9999;
-    private static int roomServerID = 0;
+    private static int roomServerID;
     private static Registry registry;
+    private static HashMap<Integer, ArrayList<String>> roomUserListCache;
 
-    public RoomServer() throws RemoteException, NotBoundException {
+    public RoomServer(String[] args) throws RemoteException, NotBoundException {
         dbHelper = new DBHelper();
+        roomUserListCache = new HashMap<>();
+        // init RPC connection
         registry = LocateRegistry.getRegistry(host);
         RoomServerInterface stub = (RoomServerInterface) UnicastRemoteObject.exportObject(this, 0);
         registry.rebind(ServerConfig.RPC_ROOM_NAME, stub);
+        // get roomServerID
+        if (args.length > 0) {
+            roomServerID = Integer.parseInt(args[0]);
+        } else {
+            roomServerID = 0;   // default roomServerID 0
+        }
     }
 
     public static void main(String[] args) {
         try {
-            if (args.length > 0) {
-                roomServerID = Integer.parseInt(args[0]);
-            } else {
-                roomServerID = 0;
-            }
-            RoomServer roomServer = new RoomServer();
+            RoomServer roomServer = new RoomServer(args);
             Log.Info("roomServer " + roomServerID + " is running...");
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
@@ -63,6 +69,8 @@ public class RoomServer implements RoomServerInterface {
         if (dbHelper.updateRoomAddress(roomID, roomAddress) == ServerConfig.SUCCESS) {
             if (dbHelper.addUserToRoom(roomID, username) == ServerConfig.SUCCESS) {
                 if (dbHelper.addRoomToUser(username, roomID) == ServerConfig.SUCCESS) {
+                    // also update roomServer roomUserListCache
+                    updateRoomUserListCache(roomID, username);
                     return roomID;
                 } else {
                     Log.Error("Error when adding roomID " + roomID + " to user " + username + "'s room list.");
@@ -78,10 +86,20 @@ public class RoomServer implements RoomServerInterface {
         }
     }
 
+    // add a user to roomUserListCache on current roomServer
+    private void updateRoomUserListCache(int roomID, String username) {
+        ArrayList<String> roomUsers = roomUserListCache.get(roomID);
+        roomUsers.add(username);
+        roomUserListCache.put(roomID, roomUsers);
+    }
+
     @Override
     public void relocateRoom(int roomID) throws RemoteException {
         // update new roomAddress
         dbHelper.updateRoomAddress(roomID, String.valueOf(roomServerID));
+        // update roomUserListCache on current roomServer
+        ArrayList<String> roomUserList = dbHelper.getRoomUserList(roomID);
+        roomUserListCache.put(roomID, roomUserList);
     }
 
     @Override
@@ -93,14 +111,20 @@ public class RoomServer implements RoomServerInterface {
         } else if (dbHelper.getRoomAddress(roomID).getResCode() == ServerConfig.ERROR_NO_EXIST) {
             Log.Error("The invitation room does not exist with roomID " + roomID);
             return GlobalConfig.NO_ROOM;
-        } else if (dbHelper.getRoomUserList(roomID).contains(toUser)) {
+        } else if (roomUserListCache.get(roomID).contains(toUser)) {    //todo: check update is correct
             Log.Error("The invitation recipient " + toUser + " is already in the room " + roomID);
             return GlobalConfig.DUP_USER;
         } else {
             // invitation is valid, redirect message to route server
             RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
+            String invitationMsg;   // todo: check use of message, json string?
             routeServer.sendMsgToClient(toUser, "You received a new invitation from " + fromUser);
-            return GlobalConfig.SUCCESS;
+            // add invitation to user invitation history
+            if (dbHelper.updateInvitationHistory(toUser, roomID, true) == ServerConfig.SUCCESS) {
+                return GlobalConfig.SUCCESS;
+            } else {
+                return GlobalConfig.SERVER_ERROR;
+            }
         }
     }
 
@@ -109,15 +133,19 @@ public class RoomServer implements RoomServerInterface {
         // receive invitation response from RouteServer(user)
         // add the roomID-username pair to database if invitation accepted
         if (accept) {
-            // check if user can be added to the room
-            if (!dbHelper.getRoomUserList(roomID).contains(fromUser)) {
-                if (dbHelper.getInvitationHistory(fromUser).contains(String.valueOf(roomID))){
+            // check if user is already in the room
+            if (!roomUserListCache.get(roomID).contains(fromUser)) {    //todo: check update is correct
+                // check if invitation is valid
+                if (dbHelper.getInvitationHistory(fromUser).contains(String.valueOf(roomID))) {
+                    // update both db and cache on current roomServer
                     dbHelper.addUserToRoom(roomID, fromUser);
+                    updateRoomUserListCache(roomID, fromUser);
+                    dbHelper.addRoomToUser(fromUser, roomID);
                     // delete invitation history
                     dbHelper.deleteInvitationHistory(fromUser, roomID);
                     return GlobalConfig.SUCCESS;
                 } else {
-                    Log.Error("The invitation to room "+ roomID+" does not exist in " + fromUser + " invitation history ");
+                    Log.Error("The invitation to room " + roomID + " does not exist in " + fromUser + " invitation history ");
                     return GlobalConfig.NO_INVITATION;
                 }
             } else {
@@ -126,23 +154,27 @@ public class RoomServer implements RoomServerInterface {
             }
         } else {
             // delete invitation history
-            if (dbHelper.deleteInvitationHistory(fromUser, roomID)==ServerConfig.SUCCESS){
+            if (dbHelper.deleteInvitationHistory(fromUser, roomID) == ServerConfig.SUCCESS) {
                 return GlobalConfig.DECLINE;
             } else {
                 return GlobalConfig.SERVER_ERROR;
             }
-
         }
     }
 
     @Override
     public void receiveMsg(String fromUser, String msg, int roomID) throws RemoteException, NotBoundException {
         // get all users in the list
-        ArrayList<String> roomUserList = dbHelper.getRoomUserList(roomID);
+        ArrayList<String> roomUserList = roomUserListCache.get(roomID);
         // for each user in the room, send message via routeServer
         RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
         for (String toUser : roomUserList) {
             routeServer.sendMsgToClient(toUser, msg);
         }
+    }
+
+    @Override
+    public ArrayList<String> getChatHistory(String username, int roomID) throws RemoteException {
+        return null;
     }
 }
