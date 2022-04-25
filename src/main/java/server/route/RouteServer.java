@@ -46,11 +46,11 @@ public class RouteServer implements RouteServerInterface {
     }
 
     public RouteServer(int serverID) throws NotBoundException, RemoteException {
+        Log.Info("start Route Server %d", serverID);
         this.serverID = serverID;
         RaceForLeaderTask leaderTask = new RaceForLeaderTask(serverID);
         timer = new Timer();
         timer.scheduleAtFixedRate(leaderTask, 0, 500);
-        Log.Info("start Route Server %d", serverID);
     }
 
     public void listen() {

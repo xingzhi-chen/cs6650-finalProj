@@ -36,6 +36,7 @@ public class CreateRoomHandler extends AbsRouteSvrHandler {
                         .put(GlobalConfig.ROOM_ID, roomID)
                         .toString();
                 ServerHelper.writeResponse(exchange, 200, rsp);
+                Log.Info("create room %d at RoomServer%d", roomID, roomServerID);
                 roomServerID = (roomServerID + 1) % ServerConfig.ROOM_CLUSTER_SIZE;
                 return;
             } catch (NotBoundException | RemoteException e) {

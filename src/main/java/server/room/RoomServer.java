@@ -126,4 +126,9 @@ public class RoomServer implements RoomServerInterface {
             routeServer.sendMsgToClient(toUser, msg);
         }
     }
+
+    @Override
+    public String getChatHistory(int roomID) throws RemoteException {
+        return null;
+    }
 }

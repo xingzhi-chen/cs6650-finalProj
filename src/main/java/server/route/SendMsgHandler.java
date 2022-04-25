@@ -2,6 +2,7 @@ package server.route;
 
 import com.sun.net.httpserver.HttpExchange;
 import config.GlobalConfig;
+import config.Log;
 import org.json.JSONObject;
 import server.config.DBHelper;
 import server.config.DBRsp;
@@ -31,6 +32,7 @@ public class SendMsgHandler extends AbsRouteSvrHandler {
 
         int roomID = body.getInt(GlobalConfig.ROOM_ID);
         String msg = body.getString(GlobalConfig.MESSAGE);
+        Log.Info("receive chat message from user %s for room %d: %s", username, roomID, msg);
         // if no address in cache, update cache
         if (!roomIDToAddr.containsKey(roomID)) {
             DBRsp dbRsp = dbHelper.getRoomAddress(roomID);
@@ -49,7 +51,7 @@ public class SendMsgHandler extends AbsRouteSvrHandler {
             ServerHelper.writeDefaultSuccessRsp(exchange);
             return;
         } catch (NotBoundException | RemoteException e) {
-            e.printStackTrace();
+            Log.Error("%s is not available when forwarding chat message, error: %s", addr, e.getMessage());
         }
 
         // the room server is not available, try other room servers
@@ -64,7 +66,7 @@ public class SendMsgHandler extends AbsRouteSvrHandler {
                 roomIDToAddr.put(roomID, ServerConfig.RPC_ROOM_NAME + roomServerID);
                 ServerHelper.writeDefaultSuccessRsp(exchange);
             } catch (NotBoundException | RemoteException e) {
-                e.printStackTrace();
+                Log.Error("RoomServer%d is not available when forwarding chat message, error: %s", roomServerID, e.getMessage());
                 trials++;
             }
         }

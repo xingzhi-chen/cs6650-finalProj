@@ -162,7 +162,7 @@ public class DBHelper {
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException e) {
-            Log.Error("fail to connect to db when reading master route ID");
+            Log.Error("fail to connect to db when updating master route ID to %d", myID);
             return ServerConfig.SERVER_ERROR;
         }
     }

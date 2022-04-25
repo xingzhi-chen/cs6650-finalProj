@@ -24,7 +24,7 @@ do
     echo "create proposer ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" 2>&1 | tee "$LOG" &
+  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" &>"$LOG" &
   echo start proposer "$i" "$port"
 done
 

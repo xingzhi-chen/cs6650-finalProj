@@ -30,6 +30,7 @@ public class InvitationHandler extends AbsRouteSvrHandler {
         int roomID = body.getInt(GlobalConfig.ROOM_ID);
         String newUser = body.getString(GlobalConfig.NEW_USER);
         DBRsp dbRsp = dbHelper.getRoomAddress(roomID);
+        Log.Info("receive invitation request for room %d from user %s to user %s", roomID, username, newUser);
         if (dbRsp.getResCode() == ServerConfig.ERROR_NO_EXIST) {
             ServerHelper.writeNoRoomRsp(exchange);
             return;
@@ -48,7 +49,7 @@ public class InvitationHandler extends AbsRouteSvrHandler {
             }
             return;
         } catch (NotBoundException | RemoteException e) {
-            e.printStackTrace();
+            Log.Error("fail to connect to %s when processing invitation request, error: %s", addr, e.getMessage());
         }
         ServerHelper.writeServerErrorRsp(exchange);
     }

@@ -43,7 +43,7 @@ public class WebSocketHandler extends WebSocketServer {
     }
 
     @Override
-    public void onClose(WebSocket webSocket, int i, String s, boolean b) {
+    public synchronized void onClose(WebSocket webSocket, int i, String s, boolean b) {
         String addr = webSocket.getRemoteSocketAddress().toString();
         // delete user websocket and address information in the map
         if (remoteAddrs.containsKey(addr)) {
@@ -54,7 +54,7 @@ public class WebSocketHandler extends WebSocketServer {
     }
 
     @Override
-    public void onMessage(WebSocket webSocket, String s) {
+    public synchronized void onMessage(WebSocket webSocket, String s) {
         // the only message client will send to server is token
         JSONObject obj = new JSONObject(s);
         // send the token check result through ServerMsg.msg
