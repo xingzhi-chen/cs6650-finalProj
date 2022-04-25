@@ -25,6 +25,7 @@ public class ClientComm implements ClientCommInterface{
     private List<Integer> invitedIDList;
     private List<Integer> availableIDList;
     private WebSocketHandler webSocketHandler;
+    private String msg = "empty msg";
 
 
     public ClientComm() {
@@ -107,6 +108,7 @@ public class ClientComm implements ClientCommInterface{
         try {
             HttpResponse<String> response =
                     HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            this.msg = response.body();
             System.out.println("Response=" + response.body());
 
             // check status code
@@ -139,5 +141,9 @@ public class ClientComm implements ClientCommInterface{
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getMsg(){
+        return this.msg;
     }
 }
