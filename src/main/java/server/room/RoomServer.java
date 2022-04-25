@@ -2,6 +2,7 @@ package server.room;
 
 import config.GlobalConfig;
 import config.Log;
+import config.ServerMsg;
 import server.config.DBHelper;
 import server.config.DBRsp;
 import server.config.ServerConfig;
@@ -117,10 +118,11 @@ public class RoomServer implements RoomServerInterface {
         } else {
             // invitation is valid, redirect message to route server
             RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
-            String invitationMsg;   // todo: check use of message, json string?
-            routeServer.sendMsgToClient(toUser, "You received a new invitation from " + fromUser);
+            String invitationMsg = new ServerMsg(GlobalConfig.INVITATION, fromUser, roomID,
+                    "You received a new invitation from "+fromUser+" to room "+ roomID).toJSONString();
+            routeServer.sendMsgToClient(toUser, invitationMsg);
             // add invitation to user invitation history
-            if (dbHelper.updateInvitationHistory(toUser, roomID, true) == ServerConfig.SUCCESS) {
+            if (dbHelper.addInvitationHistory(toUser, roomID) == ServerConfig.SUCCESS) {
                 return GlobalConfig.SUCCESS;
             } else {
                 return GlobalConfig.SERVER_ERROR;
@@ -136,17 +138,24 @@ public class RoomServer implements RoomServerInterface {
             // check if user is already in the room
             if (!roomUserListCache.get(roomID).contains(fromUser)) {    //todo: check update is correct
                 // check if invitation is valid
-                if (dbHelper.getInvitationHistory(fromUser).contains(String.valueOf(roomID))) {
-                    // update both db and cache on current roomServer
-                    dbHelper.addUserToRoom(roomID, fromUser);
-                    updateRoomUserListCache(roomID, fromUser);
-                    dbHelper.addRoomToUser(fromUser, roomID);
-                    // delete invitation history
-                    dbHelper.deleteInvitationHistory(fromUser, roomID);
-                    return GlobalConfig.SUCCESS;
+                DBRsp invitationHistoryRsp = dbHelper.getInvitationHistory(fromUser);
+                if (invitationHistoryRsp.getResCode()==ServerConfig.SUCCESS){
+                    if (invitationHistoryRsp.getValue().contains(String.valueOf(roomID))){
+                        // update both db and cache on current roomServer, and delete invitation history
+                        if(dbHelper.addUserToRoom(roomID, fromUser)==ServerConfig.SUCCESS
+                        && dbHelper.addRoomToUser(fromUser, roomID)==ServerConfig.SUCCESS
+                        && dbHelper.deleteInvitationHistory(fromUser, roomID)==ServerConfig.SUCCESS){
+                            updateRoomUserListCache(roomID, fromUser);
+                            return GlobalConfig.SUCCESS;
+                        } else{
+                            return GlobalConfig.SERVER_ERROR;
+                        }
+                    } else {
+                        Log.Error("The invitation to room " + roomID + " does not exist in " + fromUser + " invitation history ");
+                        return GlobalConfig.NO_INVITATION;
+                    }
                 } else {
-                    Log.Error("The invitation to room " + roomID + " does not exist in " + fromUser + " invitation history ");
-                    return GlobalConfig.NO_INVITATION;
+                    return GlobalConfig.SERVER_ERROR;
                 }
             } else {
                 Log.Error("The invitation recipient " + fromUser + " is already in the room " + roomID);
@@ -166,16 +175,27 @@ public class RoomServer implements RoomServerInterface {
     public void receiveMsg(String fromUser, String msg, int roomID) throws RemoteException, NotBoundException {
         // get all users in the list
         ArrayList<String> roomUserList = roomUserListCache.get(roomID);
-        // for each user in the room, send message via routeServer
-        RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
-        for (String toUser : roomUserList) {
-            routeServer.sendMsgToClient(toUser, msg);
+        if (dbHelper.addRoomChatHistory(roomID, msg) == ServerConfig.SUCCESS){
+            // for each user in the room, send message via routeServer
+            RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
+            for (String toUser : roomUserList) {
+                routeServer.sendMsgToClient(toUser, msg);
+            }
+        } else {
+            Log.Error("Server error when adding chat message to the room " + roomID);
+            throw new RemoteException();
         }
+
     }
 
     @Override
-
     public String getChatHistory(int roomID) throws RemoteException {
-        return null;
+        DBRsp getChatHistoryRsp = dbHelper.getRoomChatHistory(roomID);
+        if (getChatHistoryRsp.getResCode()== ServerConfig.SUCCESS){
+            return getChatHistoryRsp.getValue().toString();
+        } else {
+            Log.Error("Server error when getting chat message from the room " + roomID);
+            throw new RemoteException();    // exception handled in server.route.GetChatHistoryHandler
+        }
     }
 }

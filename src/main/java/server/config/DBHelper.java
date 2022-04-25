@@ -8,12 +8,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 
 
 /*
-* helper functions for db operations
+ * helper functions for db operations
  */
 public class DBHelper {
     private DBInterface db;
@@ -22,7 +21,7 @@ public class DBHelper {
     public DBHelper() throws RemoteException, NotBoundException {
         String host = "127.0.0.1";
         Registry registry = LocateRegistry.getRegistry(host);
-        int serverID = new Random().nextInt() > 0? 1 : 2;
+        int serverID = new Random().nextInt() > 0 ? 1 : 2;
         db = (DBInterface) registry.lookup(ServerConfig.RPC_DB_NAME + serverID);
     }
 
@@ -52,7 +51,9 @@ public class DBHelper {
     }
 
     // chat messages history in a room
-    private String roomChatHistoryKey(int roomID){return "roomChatHistory."+roomID;}
+    private String roomChatHistoryKey(int roomID) {
+        return "roomChatHistory." + roomID;
+    }
 
     // add a new user with his/her password to the system
     public int addNewUser(String username, String password) {
@@ -102,16 +103,27 @@ public class DBHelper {
         }
     }
 
-    // todo
-//    public ArrayList<String> getRoomChatHistory(int roomID){
-//        try {
-//            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), ServerConfig.ACTION_GET);
-//            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-//            return rspBody.getValue();
-//        } catch (RemoteException exp) {
-//            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
-//        }
-//    }
+    // get room chat history of a room
+    public DBRsp getRoomChatHistory(int roomID){
+        try {
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
+    }
+
+    // get room chat history of a room
+    public int addRoomChatHistory(int roomID, String chatMessage){
+        try {
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), chatMessage, ServerConfig.ACTION_PUT, true);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            Log.Error("Error " + exp.getMessage() + " when adding chat message to room " + roomID);
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
 
     // get address (which RoomServer the room is on) of a room
     public DBRsp getRoomAddress(int roomID) {
@@ -123,19 +135,22 @@ public class DBHelper {
         }
     }
 
-    // get the users of a room
+    // get the users list of a room
     public ArrayList<String> getRoomUserList(int roomID) throws RemoteException {
         DBReq reqBody = new DBReq(roomUserListKey(roomID), ServerConfig.ACTION_GET);
         DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-        return rspBody.getValue();
+        return rspBody.getValue();  // exception will be handled in server.route.SendMsgHandler
     }
 
+    // get the rooms list a user is in
+    public DBRsp getUserRoomList(String username) throws RemoteException {
+        try {
+            DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
 
-    // get the rooms a user is in
-    public ArrayList<String> getUserRoomList(String username) throws RemoteException {
-        DBReq reqBody = new DBReq(userRoomListKey(username), ServerConfig.ACTION_GET);
-        DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-        return rspBody.getValue();
     }
 
     // check if username exists
@@ -161,14 +176,45 @@ public class DBHelper {
         }
     }
 
+    // add room invitation to a user's invitation history
+    public int addInvitationHistory(String username, int roomID) {
+        try {
+            DBReq reqBody = new DBReq(userInvitationListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, true);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException e) {
+            Log.Error("Error " + e.getMessage() + " when adding invitation of " + roomID + " to user " + username + "'s room list ");
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
+    // get room invitation of a user's invitation history
+    public DBRsp getInvitationHistory(String username) throws RemoteException {
+        try {
+            DBReq reqBody = new DBReq(userInvitationListKey(username), ServerConfig.ACTION_GET);
+            return new DBRsp(db.DBRequest(reqBody.toJSONString()));
+        } catch (RemoteException exp) {
+            return new DBRsp(ServerConfig.SERVER_ERROR, ServerConfig.errorMsg.get(ServerConfig.SERVER_ERROR));
+        }
+    }
+
+    // delete an invitation entry from user's invitation history
     public int deleteInvitationHistory(String username, int roomID) {
         try {
-            ArrayList<String> invitationHistory = getInvitationHistory(username);
+            DBRsp invitationHistoryRsp = getInvitationHistory(username);
+            ArrayList<String> invitationHistory = invitationHistoryRsp.getValue();
             invitationHistory.remove(String.valueOf(roomID));
-            return updateInvitationHistory(username, roomID, false);
+            // update invitation history
+            for (String invitationRoom:invitationHistory){
+                if (addInvitationHistory(username, Integer.parseInt(invitationRoom))==ServerConfig.SERVER_ERROR){
+                    return ServerConfig.SERVER_ERROR;
+                }
+            }
+            return ServerConfig.SUCCESS;
         } catch (Exception e) {
             Log.Error("Error " + e.getMessage() + " when deleting invitation of " + roomID + " to user " + username + "'s room list ");
-            return ServerConfig.SERVER_ERROR;}
+            return ServerConfig.SERVER_ERROR;
+        }
     }
 
     // get the ID of the RouteServer that is acting as the master
@@ -185,23 +231,6 @@ public class DBHelper {
             Log.Error("fail to connect to db when reading master route ID");
             return ServerConfig.SERVER_ERROR;
         }
-    }
-
-    public int updateInvitationHistory(String username, int roomID, boolean append) {
-        try {
-            DBReq reqBody = new DBReq(userInvitationListKey(username), String.valueOf(roomID), ServerConfig.ACTION_PUT, append);
-            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-            return rspBody.getResCode();
-        } catch (RemoteException e) {
-            Log.Error("Error " + e.getMessage() + " when adding invitation of " + roomID + " to user " + username + "'s room list ");
-            return ServerConfig.SERVER_ERROR;
-        }
-    }
-
-    public ArrayList<String> getInvitationHistory(String username) throws RemoteException {
-        DBReq reqBody = new DBReq(userInvitationListKey(username), ServerConfig.ACTION_GET);
-        DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
-        return rspBody.getValue();
     }
 
     // mark RouteServer of ID myID as the master server
