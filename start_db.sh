@@ -2,11 +2,11 @@
 
 TARGET="target/classes"
 CLASS_PATH="server.database"
-JSON_JAR="json-20211205.jar"
+JARS=":json-20211205.jar:Java-WebSocket-1.5.3.jar:slf4j-api-1.7.2.jar:java-jwt-3.19.1.jar:jackson-annotations-2.13.2.jar:jackson-core-2.13.2.jar:jackson-databind-2.13.2.2.jar"
 CUR_DIR=$(pwd)
 
-ACCEPTOR_SIZE=5
-PROPOSER_SIZE=2
+ACCEPTOR_SIZE=3
+PROPOSER_SIZE=1
 LEARNER_SIZE=2
 
 if [ ! -d "$TARGET" ]; then
@@ -24,7 +24,7 @@ do
     echo "create proposer ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" &>"$LOG" &
+  java -cp .:"$JARS" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Proposer "$i" &>"$LOG" &
   echo start proposer "$i" "$port"
 done
 
@@ -36,7 +36,7 @@ do
     echo "create learner ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Learner "$i" &>"$LOG" &
+  java -cp .:"$JARS" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Learner "$i" &>"$LOG" &
   echo start learner "$i" "$port"
 done
 
@@ -48,6 +48,6 @@ do
     echo "create acceptor ${i} log file"
     touch "$LOG"
   fi
-  java -cp .:"$JSON_JAR" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Acceptor "$i" &>"$LOG" &
+  java -cp .:"$JARS" -Djava.rmi.server.codebase=file:./ "$CLASS_PATH".Acceptor "$i" &>"$LOG" &
   echo start acceptor "$i" "$port"
 done

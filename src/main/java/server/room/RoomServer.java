@@ -3,6 +3,7 @@ package server.room;
 import config.GlobalConfig;
 import config.Log;
 import config.ServerMsg;
+import org.json.JSONObject;
 import server.config.DBHelper;
 import server.config.DBRsp;
 import server.config.ServerConfig;
@@ -28,24 +29,24 @@ public class RoomServer implements RoomServerInterface {
     private static Registry registry;
     private static HashMap<Integer, ArrayList<String>> roomUserListCache;
 
-    public RoomServer(String[] args) throws RemoteException, NotBoundException {
+
+    public RoomServer(int roomServerID) throws RemoteException, NotBoundException {
         dbHelper = new DBHelper();
         roomUserListCache = new HashMap<>();
         // init RPC connection
         registry = LocateRegistry.getRegistry(host);
         RoomServerInterface stub = (RoomServerInterface) UnicastRemoteObject.exportObject(this, 0);
-        registry.rebind(ServerConfig.RPC_ROOM_NAME, stub);
-        // get roomServerID
-        if (args.length > 0 && args[0].length() == 1) {
-            roomServerID = Integer.parseInt(args[0]);
-        } else {
-            roomServerID = 0;   // default roomServerID 0
-        }
+        registry.rebind(ServerConfig.RPC_ROOM_NAME + roomServerID, stub);
     }
 
     public static void main(String[] args) {
         try {
-            RoomServer roomServer = new RoomServer(args);
+            if (args.length > 0) {
+                roomServerID = Integer.parseInt(args[0]);
+            } else {
+                roomServerID = 0;
+            }
+            RoomServer roomServer = new RoomServer(roomServerID);
             Log.Info("roomServer " + roomServerID + " is running...");
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
@@ -190,12 +191,18 @@ public class RoomServer implements RoomServerInterface {
 
     @Override
     public String getChatHistory(int roomID) throws RemoteException {
-        DBRsp getChatHistoryRsp = dbHelper.getRoomChatHistory(roomID);
-        if (getChatHistoryRsp.getResCode()== ServerConfig.SUCCESS){
-            return getChatHistoryRsp.getValue().toString();
-        } else {
-            Log.Error("Server error when getting chat message from the room " + roomID);
-            throw new RemoteException();    // exception handled in server.route.GetChatHistoryHandler
-        }
+//        DBRsp getChatHistoryRsp = dbHelper.getRoomChatHistory(roomID);
+//        if (getChatHistoryRsp.getResCode()== ServerConfig.SUCCESS){
+//            return getChatHistoryRsp.getValue().toString();
+//        } else {
+//            Log.Error("Server error when getting chat message from the room " + roomID);
+//            throw new RemoteException();    // exception handled in server.route.GetChatHistoryHandler
+//        }
+
+        ArrayList<String> history = new ArrayList<>() {{
+            add("record1");
+        }};
+        String res = new JSONObject().put(GlobalConfig.HISTORY, history).toString();
+        return res;
     }
 }

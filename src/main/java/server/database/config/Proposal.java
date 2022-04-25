@@ -12,7 +12,6 @@ public class Proposal {
     private final long proposalID;
     // values of the client request
     private final DBReq reqBody;
-//    private final GsonBuilder builder = new GsonBuilder();
 
     public Proposal(long proposalID, DBReq reqBody) {
         this.proposalID = proposalID;
@@ -21,11 +20,6 @@ public class Proposal {
 
     // parse proposal from JSON string
     public Proposal(String JSONStr) {
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        Proposal proposal = gson.fromJson(JSONStr, Proposal.class);
-//        this.proposalID = proposal.getProposalID();
-//        this.reqBody = proposal.getReqBody();
         JSONObject obj = new JSONObject(JSONStr);
         proposalID = obj.getLong(PROPOSAL_ID);
         reqBody = new DBReq(obj.getString(REQ_BODY));
@@ -33,9 +27,6 @@ public class Proposal {
 
     // serialize the proposal to JSON string for RMI communication
     public String toJSONString() {
-//        builder.serializeNulls();
-//        Gson gson = builder.create();
-//        return gson.toJson(this);
         JSONObject obj = new JSONObject();
         obj.put(PROPOSAL_ID, proposalID);
         obj.put(REQ_BODY, reqBody.toJSONString());

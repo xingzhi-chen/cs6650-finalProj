@@ -36,9 +36,10 @@ public class RouteServer implements RouteServerInterface {
         public void run() {
             int curID = dbHelper.getMasterRouteID();
             if (curID == ServerConfig.ERROR_NO_EXIST) {
-                dbHelper.updateMasterRouteID(myID);
-                listen();
-                Log.Info("set RouteServer %d to be the master server", myID);
+                if (listen()) {
+                    dbHelper.updateMasterRouteID(myID);
+                    Log.Info("set RouteServer %d to be the master server", myID);
+                }
             } else if (curID == myID) {
                 dbHelper.updateMasterRouteID(myID);
             }
@@ -48,12 +49,13 @@ public class RouteServer implements RouteServerInterface {
     public RouteServer(int serverID) throws NotBoundException, RemoteException {
         Log.Info("start Route Server %d", serverID);
         this.serverID = serverID;
-        RaceForLeaderTask leaderTask = new RaceForLeaderTask(serverID);
+//        RaceForLeaderTask leaderTask = new RaceForLeaderTask(serverID);
         timer = new Timer();
-        timer.scheduleAtFixedRate(leaderTask, 0, 500);
+//        timer.scheduleAtFixedRate(leaderTask, 0, 30);
+        listen();
     }
 
-    public void listen() {
+    public boolean listen() {
         try {
             DBHelper dbHelper = new DBHelper();
             String host = "127.0.0.1";
@@ -75,8 +77,10 @@ public class RouteServer implements RouteServerInterface {
             int websocketPort = GlobalConfig.WEBSOCKET_PORTS.get(serverID - 1);
             webSocketHandler = new WebSocketHandler(dbHelper, websocketPort);
             webSocketHandler.start();
+            return true;
         } catch (NotBoundException | IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

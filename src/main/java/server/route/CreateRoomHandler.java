@@ -42,11 +42,11 @@ public class CreateRoomHandler extends AbsRouteSvrHandler {
             } catch (NotBoundException | RemoteException e) {
                 Log.Error("fail to connect RoomServer %d, try next server...", roomServerID);
                 e.printStackTrace();
-                roomServerID = (roomServerID + 1) % ServerConfig.ROOM_CLUSTER_SIZE;
+                roomServerID = (roomServerID + 1) % ServerConfig.ROOM_CLUSTER_SIZE + 1;
                 trials++;
             }
         }
-        ServerHelper.writeIllegalAccessRsp(exchange);
+        ServerHelper.writeServerErrorRsp(exchange);
         return;
     }
 }

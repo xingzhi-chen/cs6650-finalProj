@@ -33,7 +33,7 @@ public class LoginServer implements LoginServerInterface{
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
             server.setExecutor(threadPoolExecutor);
             server.start();
-            Log.Info("Login server started on port " + port);
+            Log.Info("Login server %d started on port %d", Integer.parseInt(args[0]), port);
         } catch (IOException | NotBoundException e) {
             e.printStackTrace();
         }

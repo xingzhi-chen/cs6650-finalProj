@@ -1,5 +1,6 @@
 package server.config;
 
+import config.GlobalConfig;
 import config.Log;
 import server.database.DBInterface;
 
@@ -21,7 +22,7 @@ public class DBHelper {
     public DBHelper() throws RemoteException, NotBoundException {
         String host = "127.0.0.1";
         Registry registry = LocateRegistry.getRegistry(host);
-        int serverID = new Random().nextInt() > 0 ? 1 : 2;
+        int serverID = (new Random().nextInt() % ServerConfig.DB_CLUSTER_SIZE + ServerConfig.DB_CLUSTER_SIZE) % ServerConfig.DB_CLUSTER_SIZE + 1;
         db = (DBInterface) registry.lookup(ServerConfig.RPC_DB_NAME + serverID);
     }
 
@@ -60,6 +61,7 @@ public class DBHelper {
         try {
             DBReq reqBody = new DBReq(UsernameKey(username), password, ServerConfig.ACTION_PUT);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            Log.Info("add new user %s to system", username);
             return rspBody.getResCode();
         } catch (RemoteException exp) {
             Log.Error("Error " + exp.getMessage() + " when adding new user " + username);
@@ -236,7 +238,7 @@ public class DBHelper {
     // mark RouteServer of ID myID as the master server
     public int updateMasterRouteID(Integer myID) {
         try {
-            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, myID.toString(), ServerConfig.ACTION_PUT, false, 1);
+            DBReq reqBody = new DBReq(ServerConfig.RPC_ROUTE_NAME, myID.toString(), ServerConfig.ACTION_PUT, false, 60);
             DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
             return rspBody.getResCode();
         } catch (RemoteException e) {
