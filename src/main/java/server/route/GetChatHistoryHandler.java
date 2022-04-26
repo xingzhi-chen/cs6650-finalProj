@@ -2,6 +2,7 @@ package server.route;
 
 import com.sun.net.httpserver.HttpExchange;
 import config.GlobalConfig;
+import config.Log;
 import org.json.JSONObject;
 import server.config.DBHelper;
 import server.config.DBRsp;
@@ -12,6 +13,7 @@ import server.room.RoomServerInterface;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 
 public class GetChatHistoryHandler extends AbsRouteSvrHandler {
     public GetChatHistoryHandler(DBHelper dbHelper, Registry registry) {
@@ -40,10 +42,11 @@ public class GetChatHistoryHandler extends AbsRouteSvrHandler {
             String rsp = new JSONObject()
                     .put(GlobalConfig.RES_CODE, GlobalConfig.SUCCESS)
                     .put(GlobalConfig.MESSAGE, GlobalConfig.errorMsg.get(GlobalConfig.SUCCESS))
-                    .put(GlobalConfig.HISTORY, history)
+                    .put(GlobalConfig.HISTORY, new JSONObject(history).getJSONArray(GlobalConfig.HISTORY))
                     .toString();
+            ServerHelper.writeResponse(exchange, 200, rsp);
             return;
-        } catch (NotBoundException | RemoteException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         ServerHelper.writeServerErrorRsp(exchange);

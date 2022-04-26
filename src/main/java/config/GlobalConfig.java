@@ -20,6 +20,7 @@ public class GlobalConfig {
     public static final String PASSWORD = "password";
     public static final String ROOM_LIST = "roomList";
     public static final String HISTORY = "history";
+    public static final String MSG_TYPE = "msgType";
 
     // resCode for server response to client
     public static final int SUCCESS = 1000;
@@ -31,6 +32,8 @@ public class GlobalConfig {
     public static final int DUP_USER = 1006;    // for inviting user to room use
     public static final int DECLINE = 1007;
     public static final int TOKEN_EXPIRED = 1008;
+    public static final int NO_INVITATION = 1009;
+
 
     public static final HashMap<Integer, String> errorMsg = new HashMap<>() {{
         put(SUCCESS, "success");
@@ -41,6 +44,7 @@ public class GlobalConfig {
         put(NO_ROOM, "no such a room in the system");
         put(DUP_USER, "user is already in the room");
         put(DECLINE, "invitation to room was declined");
+        put(NO_INVITATION, "the invitation is not valid");
         put(TOKEN_EXPIRED, "token expired");
     }};
 

@@ -11,29 +11,39 @@ import server.config.ServerHelper;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /*
 * Handler for websocket connection
 * */
 public class WebSocketHandler extends WebSocketServer {
-    // HashMap of address to websocket
+    // HashMap of username to websocket
     private final HashMap<String, WebSocket> sockets;
-    // HashMap of username to address
-    private final HashMap<String, String> remoteAddrs;
+    private final HashSet<String> registeredUsers;
     private final DBHelper dbHelper;
 
     public WebSocketHandler(DBHelper dbHelper, int port) {
         super(new InetSocketAddress(port));
         sockets = new HashMap<>();
-        remoteAddrs = new HashMap<>();
+        registeredUsers = new HashSet<>();
         this.dbHelper = dbHelper;
     }
 
     // send server message to user through the stored websocket
     public void sendMsgToClient(String toUser, String msg) throws IOException {
-        if (sockets.containsKey(toUser) && sockets.get(toUser).isOpen()) {
-            sockets.get(toUser).send(msg);
+        if (sockets.containsKey(toUser)) {
+            if (sockets.get(toUser).isOpen()) {
+                sockets.get(toUser).send(msg);
+                return;
+            } else {
+                sockets.remove(toUser);
+            }
+        }
+        if (registeredUsers.contains(toUser) || dbHelper.checkUsername(toUser) == ServerConfig.SUCCESS) {
+            registeredUsers.add(toUser);
+            dbHelper.saveUnsentMsg(toUser, msg);
         }
     }
 
@@ -44,13 +54,7 @@ public class WebSocketHandler extends WebSocketServer {
 
     @Override
     public synchronized void onClose(WebSocket webSocket, int i, String s, boolean b) {
-        String addr = webSocket.getRemoteSocketAddress().toString();
-        // delete user websocket and address information in the map
-        if (remoteAddrs.containsKey(addr)) {
-            String username = remoteAddrs.get(addr);
-            sockets.remove(username);
-            Log.Debug("client %s left", username);
-        }
+
     }
 
     @Override
@@ -76,9 +80,16 @@ public class WebSocketHandler extends WebSocketServer {
         }
 
         webSocket.send(new ServerMsg(GlobalConfig.SYSTEM, "", 0, String.valueOf(GlobalConfig.SUCCESS)).toJSONString());
+        ArrayList<String> prevMsgs = dbHelper.getUnsentMsg(username);
+        if (prevMsgs != null) {
+            for (String msg : prevMsgs) {
+                webSocket.send(msg);
+            }
+        }
+        dbHelper.clearSavedMsg(username);
         // add socket-user info to map
         sockets.put(username, webSocket);
-        remoteAddrs.put(webSocket.getRemoteSocketAddress().toString(), username);
+        registeredUsers.add(username);
     }
 
     @Override

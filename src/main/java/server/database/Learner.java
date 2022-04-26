@@ -20,7 +20,7 @@ public class Learner implements RMILearnerInterface {
     @Override
     public void notifyAcceptance(String proposalJSONStr, int acceptorID) throws RemoteException {
         Proposal proposal = new Proposal(proposalJSONStr);
-        Log.Debug("Learner %d receives accept notification from acceptor %d: %s", myServer.getServerID(), acceptorID, proposalJSONStr);
+        // Log.Debug("Learner %d receives accept notification from acceptor %d: %s", myServer.getServerID(), acceptorID, proposalJSONStr);
         try {
             myServer.getLock().lock();
             if (myServer.isNewAcceptance(proposal)) {
@@ -33,7 +33,7 @@ public class Learner implements RMILearnerInterface {
             }
             // the number of acceptance received reaches majority, process the proposal
             if (myServer.getAcceptanceNum(proposal) == DBConfig.QUORUM) {
-                Log.Debug("Quorum reached at Learner %d, process proposal %s", myServer.getServerID(), proposalJSONStr);
+                // Log.Debug("Quorum reached at Learner %d, process proposal %s", myServer.getServerID(), proposalJSONStr);
                 myServer.processReq(proposal);
             }
         } catch (IOException exp) {

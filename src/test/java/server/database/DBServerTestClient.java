@@ -103,4 +103,16 @@ public class DBServerTestClient {
         rspBody = new DBRsp(db.DBRequest(req));
         assert(rspBody.getResCode() == ServerConfig.ERROR_NO_EXIST);
     }
+
+    @Test
+    public void testGet() throws RemoteException, InterruptedException {
+//        String req = new DBReq("username.name", "no pass", ServerConfig.ACTION_PUT).toJSONString();
+//        DBRsp rspBody = new DBRsp(db.DBRequest(req));
+//        System.out.println(rspBody.toJSONString());
+//        Thread.sleep(5000);
+
+        String req = new DBReq("username.name", ServerConfig.ACTION_GET).toJSONString();
+        DBRsp rspBody = new DBRsp(db.DBRequest(req));
+        System.out.println(rspBody.toJSONString());
+    }
 }

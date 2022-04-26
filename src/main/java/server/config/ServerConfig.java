@@ -19,8 +19,9 @@ public class ServerConfig {
     public static final String RPC_ROUTE_NAME = "RMIRouteServer";
     public static final String RPC_ROOM_NAME = "RMIRoomServer";
     public static final String RPC_LOGIN_NAME = "RMILoginServer";
-    public static final int DB_CLUSTER_SIZE = 2;
+    public static final int DB_CLUSTER_SIZE = 1;
     public static final int ROOM_CLUSTER_SIZE = 3;
+    public static final int MASTER_TIMEOUT_INTERVAL = 10;
 
     // timeout for server-server response inside cluster, 1 seconds
     public static final int CLUSTER_TIMEOUT = 1000;

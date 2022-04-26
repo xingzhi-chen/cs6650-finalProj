@@ -1,11 +1,11 @@
 #!/bin/sh
 
 TARGET="target/classes"
-JARS=":json-20211205.jar:Java-WebSocket-1.5.3.jar:slf4j-api-1.7.2.jar:java-jwt-3.19.1.jar"
+JARS=":json-20211205.jar:Java-WebSocket-1.5.3.jar:slf4j-api-1.7.2.jar:java-jwt-3.19.1.jar:jackson-annotations-2.13.2.jar:jackson-core-2.13.2.jar:jackson-databind-2.13.2.2.jar"
 CUR_DIR=$(pwd)
 
-ACCEPTOR_SIZE=5
-PROPOSER_SIZE=2
+ACCEPTOR_SIZE=3
+PROPOSER_SIZE=1
 LEARNER_SIZE=2
 ACCEPTOR_PID=()
 PROPOSER_PID=()
@@ -36,7 +36,7 @@ do
     touch "$LOG"
   fi
   java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Proposer "$i" &>"$LOG" &
-  PID=`expr $! - 1`
+  PID=$!
   PROPOSER_PID+=( $PID )
   echo start proposer "$i" "$port"
 done
@@ -50,7 +50,7 @@ do
     touch "$LOG"
   fi
   java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Learner "$i" &>"$LOG" &
-  PID=`expr $! - 1`
+  PID=$!
   LEARNER_PID+=( $PID )
   echo start learner "$i" "$port"
 done
@@ -64,7 +64,7 @@ do
     touch "$LOG"
   fi
   java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Acceptor "$i" &>"$LOG" &
-  PID=`expr $! - 1`
+  PID=$!
   ACCEPTOR_PID+=( $PID )
   echo start acceptor "$i" "$port"
 done
@@ -95,7 +95,7 @@ do
   java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.route.RouteServer "$i" 2>&1 | tee "$LOG" &
   PID=`expr $! - 1`
   ROUTE_PID+=( $PID )
-  sleep 0.47
+  sleep 1.47
 done
 
 # start LoginServers
@@ -123,6 +123,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Proposer "$i" &>"$LOG" &
       PID=`expr $! - 1`
       PROPOSER_PID[$IDX]=$PID
+      echo restart proposer {$i}
     fi
   done
   for (( i = $LEARNER_SIZE; i > $PROPOSER_SIZE; i-- ))
@@ -134,6 +135,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Learner "$i" &>"$LOG" &
       PID=`expr $! - 1`
       LEARNER_PID[$IDX]=$PID
+      echo restart learner {$i}
     fi
   done
   for (( i = 1; i <= $ACCEPTOR_SIZE; i++ ))
@@ -145,6 +147,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.database.Acceptor "$i" &>"$LOG" &
       PID=`expr $! - 1`
       ACCEPTOR_PID[$IDX]=$PID
+      echo restart acceptor {$i}
     fi
   done
   for (( i = 1; i <= $ROOM_SERVER_SIZE; i++ ))
@@ -156,6 +159,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.room.RoomServer "$i" 2>&1 | tee -a "$LOG" &
       PID=`expr $! - 1`
       ROOM_PID[$IDX]=$PID
+      echo restart room {$i}
     fi
   done
   for (( i = 1; i <= $ROUTE_SIZE; i++ ))
@@ -167,6 +171,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.route.RouteServer "$i" 2>&1 | tee -a "$LOG" &
       PID=`expr $! - 1`
       ROUTE_PID[$IDX]=$PID
+      echo restart route {$i}
     fi
   done
   for (( i = 1; i <= $LOGIN_SIZE; i++ ))
@@ -178,6 +183,7 @@ do
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.login.LoginServer "$i" 2>&1 | tee -a "$LOG" &
       PID=`expr $! - 1`
       LOGIN_PID[$IDX]=$PID
+      echo restart login server {$i}
     fi
   done
   sleep 2

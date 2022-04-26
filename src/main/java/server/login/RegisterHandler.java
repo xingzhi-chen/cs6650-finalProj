@@ -34,7 +34,8 @@ public class RegisterHandler implements HttpHandler {
         String password = body.getString(GlobalConfig.PASSWORD);
         // check if the user is new to db
         if (!ifUsernameExist(username)){
-            if (dbHelper.addNewUser(username, password)==ServerConfig.SUCCESS){
+            if (dbHelper.addNewUser(username, password)==ServerConfig.SUCCESS
+            && dbHelper.initUserRoomList(username)==ServerConfig.SUCCESS){
                 String rsp = new JSONObject()
                         .put(GlobalConfig.RES_CODE, GlobalConfig.SUCCESS)
                         .put(GlobalConfig.MESSAGE, GlobalConfig.errorMsg.get(GlobalConfig.SUCCESS))

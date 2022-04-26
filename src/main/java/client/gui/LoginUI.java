@@ -23,7 +23,15 @@ public class LoginUI extends JPanel{
             @Override
             public void actionPerformed(ActionEvent e) {
                 comm.register(usernameField.getText(), new String(passwordField.getPassword()));
-                JOptionPane.showMessageDialog(signupButton, comm.getMsg());
+                JOptionPane.showMessageDialog(signupButton, comm.getClientMsg());
+            }
+        });
+
+        loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                comm.login(usernameField.getText(), new String(passwordField.getPassword()));
+                JOptionPane.showMessageDialog(loginButton, comm.getClientMsg());
             }
         });
     }
