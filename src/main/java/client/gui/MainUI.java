@@ -1,32 +1,48 @@
 package client.gui;
 
+import client.comm.ClientComm;
+
 import javax.swing.*;
-import java.awt.*;
 
 public class MainUI extends JFrame {
-    JPanel cards;
-    LoginUI loginUI = new LoginUI();
-    ChatUI chatUI = new ChatUI();
+    ClientComm clientComm;
+    LoginUI loginUI;
+    ChatUI chatUI;
 
     public MainUI() {
-        this.setSize(600, 400);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setTitle("Chat App");
-        this.setLocation(800, 100);
 
-        cards = new JPanel();
-        cards.setLayout(new CardLayout());
+        clientComm = new ClientComm();
+        loginUI = new LoginUI(clientComm);
+        chatUI = new ChatUI(clientComm);
+    }
 
-        cards.add(loginUI, "LOGIN");
-        cards.add(chatUI, "CHAT");
+    public void switchToChatPanel() {
+        getContentPane().removeAll();
+        getContentPane().invalidate();
+        setContentPane(this.chatUI.getPanelMain());
+        validate();
+        setVisible(true);
+    }
 
-        this.add(cards);
-        this.setVisible(true);
-}
+    public void switchToLoginPanel() {
+        getContentPane().removeAll();
+        getContentPane().invalidate();
+        setContentPane(this.loginUI.getPanelMain());
+        validate();
+        setVisible(true);
+    }
 
-    public static void main(String[] args)
-    {
-        new MainUI();
+
+    public static void main(String[] args) throws InterruptedException {
+        MainUI ui = new MainUI();
+
+        ui.switchToLoginPanel();
+        ui.pack();
+        ui.setVisible(true);
+
+        Thread.sleep(1000);
+        ui.switchToChatPanel();
     }
 
 }

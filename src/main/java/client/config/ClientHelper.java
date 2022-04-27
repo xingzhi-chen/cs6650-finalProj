@@ -41,45 +41,33 @@ public class ClientHelper {
                 .build();
     }
 
-    public static HttpRequest parseCreateRoomRequest(String token) {
-
-        String host = String.format("http://%s:%s%s",GlobalConfig.IP_ADDRESS, GlobalConfig.ROUTE_SERVER_PORT, GlobalConfig.CREATE_ROOM_PROTOCOL);
+    public static HttpRequest parseCreateRoomRequest(String host, String token) {
         String requestBody = new JSONObject()
                 .put(GlobalConfig.TOKEN, token)
                 .toString();
 
-        System.out.println("To=" + host);
-        System.out.println("Request body=" + requestBody);
-
         return HttpRequest.newBuilder()
-                .uri(URI.create(host))
+                .uri(URI.create(host + GlobalConfig.CREATE_ROOM_PROTOCOL))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
                 .build();
     }
 
-    public static HttpRequest parseSendInviteRequest(String token, String otherUsername, int roomID) {
-
-        String host = String.format("http://%s:%s%s",GlobalConfig.IP_ADDRESS, GlobalConfig.ROUTE_SERVER_PORT, GlobalConfig.INVITE_PROTOCOL);
+    public static HttpRequest parseSendInviteRequest(String host, String token, String otherUsername, int roomID) {
         String requestBody = new JSONObject()
                 .put(GlobalConfig.TOKEN, token)
                 .put(GlobalConfig.NEW_USER, otherUsername)
                 .put(GlobalConfig.ROOM_ID, roomID)
                 .toString();
 
-        System.out.println("To=" + host);
-        System.out.println("Request body=" + requestBody);
-
         return HttpRequest.newBuilder()
-                .uri(URI.create(host))
+                .uri(URI.create(host + GlobalConfig.INVITATION_RSP_PROTOCOL))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
                 .build();
     }
 
-    public static HttpRequest parseSendMsgRequest(String token, String message, int roomID) {
-
-        String host = String.format("http://%s:%s%s",GlobalConfig.IP_ADDRESS, GlobalConfig.ROUTE_SERVER_PORT, GlobalConfig.SEND_MSG_PROTOCOL);
+    public static HttpRequest parseSendMsgRequest(String host, String token, String message, int roomID) {
 
         String requestBody = new JSONObject()
                 .put(GlobalConfig.TOKEN, token)
@@ -87,11 +75,22 @@ public class ClientHelper {
                 .put(GlobalConfig.ROOM_ID, roomID)
                 .toString();
 
-        System.out.println("To=" + host);
-        System.out.println("Request body=" + requestBody);
+        return HttpRequest.newBuilder()
+                .uri(URI.create(host + GlobalConfig.SEND_MSG_PROTOCOL))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
+                .build();
+    }
+
+    public static HttpRequest parseGetChatHistoryRequest(String host, String token, int roomID) {
+
+        String requestBody = new JSONObject()
+                .put(GlobalConfig.TOKEN, token)
+                .put(GlobalConfig.ROOM_ID, roomID)
+                .toString();
 
         return HttpRequest.newBuilder()
-                .uri(URI.create(host))
+                .uri(URI.create(host + GlobalConfig.GET_HISTORY_PROTOCOL))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
                 .build();

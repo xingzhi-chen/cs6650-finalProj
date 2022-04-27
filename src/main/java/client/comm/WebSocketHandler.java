@@ -3,6 +3,7 @@ package client.comm;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import config.GlobalConfig;
+import config.ServerMsg;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -25,6 +26,18 @@ public class WebSocketHandler extends WebSocketClient {
     @Override
     public void onMessage(String s) {
         System.out.println("new msg: " + s);
+
+        ServerMsg serverMsg =  new Gson().fromJson(s, ServerMsg.class);
+
+        if (serverMsg.getMsgType() == GlobalConfig.SYSTEM) {
+
+        } else if (serverMsg.getMsgType() == GlobalConfig.CHAT) {
+
+        } else if (serverMsg.getMsgType() == GlobalConfig.INVITATION) {
+
+        } else {
+
+        }
 
         // success msg {"msgType":2001,"fromUser":"","message":"1000","roomID":0,"timestamp":1650956963695}
         JsonObject jsonObject = new Gson().fromJson(s, JsonObject.class);
