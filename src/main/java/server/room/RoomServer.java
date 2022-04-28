@@ -71,9 +71,14 @@ public class RoomServer implements RoomServerInterface {
         if (dbHelper.updateRoomAddress(roomID, roomAddress) == ServerConfig.SUCCESS) {
             if (dbHelper.addUserToRoom(roomID, username) == ServerConfig.SUCCESS) {
                 if (dbHelper.addRoomToUser(username, roomID) == ServerConfig.SUCCESS) {
-                    // also update roomServer roomUserListCache
-                    updateRoomUserListCache(roomID, username);
-                    return roomID;
+                    if (dbHelper.initRoomChatHistory(roomID)==ServerConfig.SUCCESS){
+                        // also update roomServer roomUserListCache
+                        updateRoomUserListCache(roomID, username);
+                        return roomID;
+                    } else {
+                        Log.Error("Error when initiating chat history for room " + roomID);
+                        throw new RemoteException();
+                    }
                 } else {
                     Log.Error("Error when adding roomID " + roomID + " to user " + username + "'s room list.");
                     throw new RemoteException();
@@ -200,8 +205,14 @@ public class RoomServer implements RoomServerInterface {
     @Override
     public String getChatHistory(int roomID) throws RemoteException {
         DBRsp getChatHistoryRsp = dbHelper.getRoomChatHistory(roomID);
+        // if roomID does not exist in chat history db, init chat history for the room
+        if (getChatHistoryRsp.getResCode() == ServerConfig.ERROR_NO_EXIST){
+            dbHelper.initRoomChatHistory(roomID);
+        }
+        // get chat history for the room
         if (getChatHistoryRsp.getResCode() == ServerConfig.SUCCESS) {
             ArrayList<String> history = getChatHistoryRsp.getValue();
+            history.remove(0); // first chat message is a placeholder put when room initially created
             return new JSONObject().put(GlobalConfig.HISTORY, history).toString();
         } else {
             Log.Error("Server error when getting chat message from the room " + roomID);

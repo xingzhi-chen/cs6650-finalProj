@@ -108,6 +108,18 @@ public class DBHelper {
         }
     }
 
+    // init chat history of a room
+    public int initRoomChatHistory(int roomID){
+        try {
+            DBReq reqBody = new DBReq(roomChatHistoryKey(roomID), "0", ServerConfig.ACTION_PUT);
+            DBRsp rspBody = new DBRsp(db.DBRequest(reqBody.toJSONString()));
+            return rspBody.getResCode();
+        } catch (RemoteException exp) {
+            Log.Error("Error " + exp.getMessage() + " when adding chat message to room " + roomID);
+            return ServerConfig.SERVER_ERROR;
+        }
+    }
+
     // get room chat history of a room
     public DBRsp getRoomChatHistory(int roomID){
         try {
