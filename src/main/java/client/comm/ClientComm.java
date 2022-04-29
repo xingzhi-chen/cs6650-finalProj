@@ -8,6 +8,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import config.GlobalConfig;
+import config.ServerMsg;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,13 +25,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ClientComm implements ClientCommInterface{
 
     private String token;
-    private List<Integer> invitedIDList;
+    private String username;
+
+    private List<ServerMsg> invitedList;
     private List<Integer> availableRoomList;
     private WebSocketHandler webSocketHandler;
 
-    private boolean succeed;
     private String clientMsg;
-    private HashMap<Integer, ArrayList<String>> chatHistory;
+    private HashMap<Integer, ArrayList<ServerMsg>> chatHistory;
 
 
     public ClientComm() {
@@ -39,22 +42,25 @@ public class ClientComm implements ClientCommInterface{
         ClientComm comm = new ClientComm();
 
         System.out.println("\n==Test register==");
-        comm.register("user2", "password2");
+        comm.register("user", "password");
 
         System.out.println("\n==Test login==");
-        comm.login("user2", "password2");
+        comm.login("user", "password");
 
         System.out.println("\n==Test ws");
-        comm.websocketConnection(comm.token);
+        comm.websocketConnection(comm.getToken());
+
+        System.out.println("\n==Test createRoom");
+        comm.createRoom(comm.token);
 //
-//        System.out.println("\n==Test createRoom");
-//        comm.createRoom("token");
-//
-//        System.out.println("\n==Test ws");
-//        comm.sendInvitation("token", "user2", 0);
-//
-//        System.out.println("\n==Test send msg");
-//        comm.sendMessage("token", "I am user", 0);
+//        System.out.println("\n==Test inv");
+//        comm.sendInvitation("token", "user2", 9732);
+
+        System.out.println("\n==Test send msg");
+        comm.sendMessage(comm.getToken(), "XXXXXXXXX", 3443);
+
+        System.out.println("====");
+        System.out.println(comm.chatHistory);
 
     }
 
@@ -105,6 +111,8 @@ public class ClientComm implements ClientCommInterface{
                 this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
 
                 if (isSucceed(jsonObject)) {
+                    // store username
+                    this.username = username;
                     // get token
                     this.token = jsonObject.get(GlobalConfig.TOKEN).getAsString();
                     // connect to websocket
@@ -137,38 +145,48 @@ public class ClientComm implements ClientCommInterface{
     public void websocketConnection(String token) {
 
         if (token == null || token.isEmpty()){
-            this.succeed = false;
             this.clientMsg = "Cannot connect to server.";
             return;
         }
 
-        // TODO 2 server
+        for (int port: GlobalConfig.WEBSOCKET_PORTS) { // Try different websocket ports
+            String host = String.format("ws://%s:%s", GlobalConfig.IP_ADDRESS, port);
+            webSocketHandler = new WebSocketHandler(URI.create(host)) {
+                @Override
+                public void onMessage(String s) {
+                    System.out.println("msg=" + s);
+                    ServerMsg serverMsg = new ServerMsg(s);
+                    if (serverMsg.getMsgType() == GlobalConfig.SYSTEM) {
+                        clientMsg = GlobalConfig.errorMsg.get(Integer.valueOf(serverMsg.getMsg()));
+                        if (Integer.valueOf(serverMsg.getMsg()).equals(GlobalConfig.SUCCESS))
+                            this.connected = true;
+                    } else if (serverMsg.getMsgType() == GlobalConfig.CHAT) {
+                        chatHistory.get(serverMsg.getRoomId()).add(serverMsg);
+                    } else if (serverMsg.getMsgType() == GlobalConfig.INVITATION) {
+                        invitedList.add(serverMsg);
+                    } else {
+                        clientMsg = "Cannot resolve websocket message from server.";
+                    }
+                }
+            };
 
-        this.succeed = false;
-        String host = String.format(
-                "ws://%s:%s",
-                GlobalConfig.IP_ADDRESS,
-                GlobalConfig.ROUTE_SERVER_PORT + 1);
-        URI routeWebsocketAddress = URI.create(host);
-
-        try {
-            webSocketHandler = new WebSocketHandler(routeWebsocketAddress);
-            webSocketHandler.connectBlocking(GlobalConfig.SERVER_TIMEOUT, MILLISECONDS);
-            System.out.println("Verify token..." + token);
-            JsonObject verifyToken = new JsonObject();
-            verifyToken.addProperty(GlobalConfig.TOKEN, token);
-            webSocketHandler.send(verifyToken.toString());
-
-            this.clientMsg = "Loading...";
-            Thread.sleep(GlobalConfig.SERVER_TIMEOUT);
-            if (webSocketHandler.connectionComplete) {
-                this.clientMsg = "Welcome to the chat room";
-                this.succeed = true;
+            try {
+                webSocketHandler.connectBlocking(GlobalConfig.SERVER_TIMEOUT, MILLISECONDS);
+                System.out.println("Verify token..." + token);
+                webSocketHandler.send(
+                        new JSONObject()
+                                .put(GlobalConfig.TOKEN, token)
+                                .toString());
+                Thread.sleep(500); // TODO wait notify
+                if (this.webSocketHandler.connected) {
+                    this.clientMsg = "Welcome to the chat room";
+                    return;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
+                continue;
             }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
         }
     }
 
@@ -192,6 +210,7 @@ public class ClientComm implements ClientCommInterface{
                 if (isSucceed(jsonObject)) {
                     int roomID = jsonObject.get(GlobalConfig.ROOM_ID).getAsInt();
                     this.availableRoomList.add(roomID);
+                    this.chatHistory.put(roomID, new ArrayList<>());
                 }
                 return;
 
@@ -258,12 +277,14 @@ public class ClientComm implements ClientCommInterface{
                 if (isSucceed(jsonObject)) {
 
                     JsonArray jsonArray = jsonObject.get(GlobalConfig.HISTORY).getAsJsonArray();
-                    ArrayList<String> history = new ArrayList<>();
+                    ArrayList<ServerMsg> history = new ArrayList<>();
                     if (jsonArray != null) {
                         for (JsonElement e : jsonArray) {
-                            history.add(e.getAsString());
+                            ServerMsg serverMsg = new ServerMsg(e.getAsString());
+                            history.add(serverMsg);
                         }
                     }
+                    history.add(new ServerMsg(GlobalConfig.CHAT, "", roomID, "============"));
                     this.chatHistory.put(roomID, history);
                 }
                 return;
@@ -278,10 +299,10 @@ public class ClientComm implements ClientCommInterface{
 
     private JsonObject getResponseValue(HttpRequest request) throws RequestFailureException{
         try {
-            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             System.out.println("Response=" + response.body());
-            return new Gson().fromJson(response.body(), JsonObject.class);
+            return (JsonObject) new Gson().fromJson(response.body(), JsonElement.class);
         } catch (HttpTimeoutException e) {
             e.printStackTrace();
             throw new RequestFailureException("Http server time out.");
@@ -292,11 +313,9 @@ public class ClientComm implements ClientCommInterface{
     }
 
     public boolean isSucceed(JsonObject jsonObject) {
-        this.succeed =
-                jsonObject.has(GlobalConfig.RES_CODE) &&
+        return jsonObject.has(GlobalConfig.RES_CODE) &&
                 jsonObject.has(GlobalConfig.MESSAGE) &&
                 jsonObject.get(GlobalConfig.RES_CODE).getAsInt() == (GlobalConfig.SUCCESS);
-        return this.succeed;
     }
 
     public String getClientMsg() {
@@ -311,11 +330,23 @@ public class ClientComm implements ClientCommInterface{
         return token;
     }
 
-    public HashMap<Integer, ArrayList<String>> getChatHistory() {
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public HashMap<Integer, ArrayList<ServerMsg>> getChatHistory() {
         return chatHistory;
     }
 
-    public List<Integer> getInvitedIDList() {
-        return invitedIDList;
+    public List<ServerMsg> getInvitedList() {
+        return invitedList;
+    }
+
+    public WebSocketHandler getWebSocketHandler() {
+        return webSocketHandler;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

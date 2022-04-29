@@ -3,34 +3,35 @@ package client.gui;
 import client.comm.ClientComm;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ChatUI extends JPanel {
-    private JList chatHistory;
-    private JTextPane newMessage;
-    private JButton sendButton;
-    private JLabel roomIDLabel;
-    private JButton logOutButton;
-    private JLabel username;
-    private JList invitedRoomList;
-    private JButton acceptButton;
-    private JButton rejectButton;
-    private JButton createButton;
-    private JButton inviteButton;
-    private JButton joinButton;
-    private JPanel panelMain;
-    private JTextField roomIDSearch;
-    private JTextField usernameSearch;
-    private JTextField newCreatedRoom;
-    private JList availableRoomList;
-    private JButton enterButton;
-    private JButton leaveButton;
+    protected JList chatHistory;
+    protected JTextPane newMessage;
+    protected JButton sendButton;
+    protected JLabel roomIDLabel;
+    protected JButton logOutButton;
+    protected JLabel username;
+    protected JList invitedRoomList;
+    protected JButton acceptButton;
+    protected JButton rejectButton;
+    protected JButton createButton;
+    protected JButton inviteButton;
+    protected JButton joinButton;
+    protected JPanel panelMain;
+    protected JTextField roomIDSearch;
+    protected JTextField usernameSearch;
+    protected JTextField newCreatedRoom;
+    protected JList availableRoomList;
+    protected JButton enterButton;
+    protected JButton leaveButton;
 
-    public ChatUI(ClientComm clientComm) {
+    protected ClientComm comm;
+    protected int currentRoom;
 
-        setUI();
-    }
-
-    private void setUI() {
+    public ChatUI(ClientComm comm) {
+        this.comm = comm;
     }
 
     public static void main(String[] args) {
@@ -48,7 +49,4 @@ public class ChatUI extends JPanel {
         f.setVisible(true);
     }
 
-    public JPanel getPanelMain() {
-        return panelMain;
-    }
 }
