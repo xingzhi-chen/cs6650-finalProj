@@ -50,17 +50,17 @@ public class ChatUI extends JPanel {
         setInviteUpdate();
     }
 
-//    public void setLogOutButton() {
-//        this.logOutButton.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                int input = JOptionPane.showConfirmDialog(logOutButton, "Log out?", "Confirm", JOptionPane.OK_CANCEL_OPTION);
-//                if (input == 0) { /// 0=ok, 2=cancel
-//                    comm.setToken(null);
-//                }
-//            }
-//        });
-//    }
+    public void setLogOutButton() {
+        this.logOutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int input = JOptionPane.showConfirmDialog(logOutButton, "Log out?", "Confirm", JOptionPane.OK_CANCEL_OPTION);
+                if (input == 0) { /// 0=ok, 2=cancel
+                    comm.setToken(null);
+                }
+            }
+        });
+    }
 
     public void setSendButton() {
         this.sendButton.addActionListener(new ActionListener() {
@@ -104,7 +104,7 @@ public class ChatUI extends JPanel {
                     int roomIDIdx = invitedRoomList.getSelectedIndex();
                     int roomID = comm.getInvitedList().get(roomIDIdx).getRoomId();
                     comm.sendInvitationRsp(comm.getToken(), roomID, true);
-                    invitedRoomList.setListData(comm.getInvitedList().toArray());  // update invited room list
+                    invitedRoomList.setListData(UIFormatter.formatInvitedRoom(comm.getInvitedList()).toArray());  // update invited room list
                     availableRoomList.setListData(comm.getAvailableRoomList().toArray());
                 }
             }
@@ -121,7 +121,7 @@ public class ChatUI extends JPanel {
                     int roomIDIdx = invitedRoomList.getSelectedIndex();
                     int roomID = comm.getInvitedList().get(roomIDIdx).getRoomId();
                     comm.sendInvitationRsp(comm.getToken(), roomID, false);
-                    invitedRoomList.setListData(comm.getInvitedList().toArray());  // update invited room list
+                    invitedRoomList.setListData(UIFormatter.formatInvitedRoom(comm.getInvitedList()).toArray());  // update invited room list
                     availableRoomList.setListData(comm.getAvailableRoomList().toArray());
                 }
             }
