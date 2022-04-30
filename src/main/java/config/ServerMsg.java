@@ -59,4 +59,8 @@ public class ServerMsg {
     public String getMsg() {
         return msg;
     }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
 }

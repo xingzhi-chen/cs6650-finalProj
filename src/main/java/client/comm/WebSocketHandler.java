@@ -8,6 +8,8 @@ import java.net.URI;
 
 public class WebSocketHandler extends WebSocketClient {
 
+    public boolean connected = false;
+
     public WebSocketHandler(URI uri){
         super(uri);
     }
@@ -29,6 +31,7 @@ public class WebSocketHandler extends WebSocketClient {
 
     @Override
     public void onError(Exception e) {
+        e.printStackTrace();
         System.out.println("Exception occurred: " + e);
     }
 }

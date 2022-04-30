@@ -31,6 +31,13 @@ public interface ClientCommInterface {
      */
     void sendInvitation(String token, String otherUsername, int roomID);
     /*
+     * send room invitation response to server, no response other than network ACK
+     * @param String token: token from login
+     * @param int roomID: the room of the invitation
+     * @param boolean accept: the response to invitation
+     */
+    void sendInvitationRsp(String token, int roomID, boolean accept);
+    /*
      * send message to a room, no response other than network ACK
      * @param String token: token from login
      * @param String message: message to send

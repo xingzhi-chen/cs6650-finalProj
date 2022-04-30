@@ -20,6 +20,7 @@ public class GlobalConfig {
     public static final String PASSWORD = "password";
     public static final String ROOM_LIST = "roomList";
     public static final String HISTORY = "history";
+    public static final String MSG_TYPE = "msgType";
 
     // resCode for server response to client
     public static final int SUCCESS = 1000;
