@@ -43,7 +43,11 @@ public class WebSocketHandler extends WebSocketServer {
         }
         if (registeredUsers.contains(toUser) || dbHelper.checkUsername(toUser) == ServerConfig.SUCCESS) {
             registeredUsers.add(toUser);
-            dbHelper.saveUnsentMsg(toUser, msg);
+            ServerMsg serverMsg = new ServerMsg(msg);
+            // only resend invitation msg, chat msg can be got through /get_chat_history api
+            if (serverMsg.getMsgType() == GlobalConfig.INVITATION) {
+                dbHelper.saveUnsentMsg(toUser, msg);
+            }
         }
     }
 
@@ -53,12 +57,12 @@ public class WebSocketHandler extends WebSocketServer {
     }
 
     @Override
-    public synchronized void onClose(WebSocket webSocket, int i, String s, boolean b) {
+    public void onClose(WebSocket webSocket, int i, String s, boolean b) {
 
     }
 
     @Override
-    public synchronized void onMessage(WebSocket webSocket, String s) {
+    public void onMessage(WebSocket webSocket, String s) {
         // the only message client will send to server is token
         JSONObject obj = new JSONObject(s);
         // send the token check result through ServerMsg.msg

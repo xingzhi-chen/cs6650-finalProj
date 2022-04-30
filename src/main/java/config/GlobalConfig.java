@@ -54,11 +54,11 @@ public class GlobalConfig {
 
     public static final ArrayList<Integer> ROUTE_PORTS = new ArrayList<>() {{
         add(8080);
-        add(8081);
+        add(8082);
     }};
     public static final ArrayList<Integer> WEBSOCKET_PORTS = new ArrayList<>() {{
         add(8081);
-        add(8082);
+        add(8083);
     }};
     public static final ArrayList<Integer> LOGIN_PORTS = new ArrayList<>() {{
         add(8090);
