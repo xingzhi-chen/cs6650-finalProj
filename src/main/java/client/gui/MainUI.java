@@ -71,7 +71,6 @@ public class MainUI extends JFrame{
         LoginUI loginUI = new LoginUI(comm);
         ChatUI chatUI = new ChatUI(comm);
 
-        frame.setContentPane(loginUI.panelMain);
 
         loginUI.loginButton.addActionListener(new ActionListener() {
             @Override
@@ -86,7 +85,7 @@ public class MainUI extends JFrame{
                     chatUI.availableRoomList.setListData(comm.getAvailableRoomList().toArray());
                     chatUI.username.setText("Username: " + comm.getUsername());
 
-                    frame.getContentPane().removeAll();
+                    frame.getContentPane().remove(loginUI.panelMain);
                     frame.setContentPane(chatUI.panelMain);
                     frame.getContentPane().revalidate();
                     frame.setSize(800, 600);
@@ -102,15 +101,18 @@ public class MainUI extends JFrame{
                 if (input == 0) { /// 0=ok, 2=cancel
                     comm.clear();
 
-                    frame.getContentPane().removeAll();
+                    frame.getContentPane().remove(chatUI.panelMain);
                     frame.setContentPane(loginUI.panelMain);
                     frame.getContentPane().revalidate();
                     frame.setSize(800, 600);
                     frame.getContentPane().repaint();
+
                 }
             }
         });
 
+        frame.setSize(800, 600);
+        frame.setContentPane(loginUI.panelMain);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
         frame.pack();
