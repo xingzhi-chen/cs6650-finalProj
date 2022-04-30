@@ -1,6 +1,5 @@
 package client.config;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import config.GlobalConfig;
 import org.json.JSONObject;
@@ -13,7 +12,6 @@ import java.time.Duration;
 public class ClientHelper {
 
     public static final String GENERAL_ERROR_MSG = "Cannot resolve the request. Please try again later.";
-
 
     public static HttpRequest parseRegisterRequest(String host, String username, String password) {
         String requestBody = new JSONObject()
@@ -61,11 +59,26 @@ public class ClientHelper {
                 .toString();
 
         return HttpRequest.newBuilder()
+                .uri(URI.create(host + GlobalConfig.INVITE_PROTOCOL))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
+                .build();
+    }
+
+    public static HttpRequest parseSendInviteRspRequest(String host, String token, int roomID, boolean accept) {
+        String requestBody = new JSONObject()
+                .put(GlobalConfig.TOKEN, token)
+                .put(GlobalConfig.ROOM_ID, roomID)
+                .put(GlobalConfig.ACCEPT, accept)
+                .toString();
+
+        return HttpRequest.newBuilder()
                 .uri(URI.create(host + GlobalConfig.INVITATION_RSP_PROTOCOL))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .timeout(Duration.ofMillis(GlobalConfig.SERVER_TIMEOUT))
                 .build();
     }
+
 
     public static HttpRequest parseSendMsgRequest(String host, String token, String message, int roomID) {
 

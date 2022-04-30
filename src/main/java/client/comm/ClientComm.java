@@ -24,18 +24,24 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ClientComm implements ClientCommInterface{
 
-    private String token;
-    private String username;
+    protected String token;
+    protected String username;
+    protected List<ServerMsg> invitedList;
+    protected List<Integer> availableRoomList;
+    protected HashMap<Integer, ArrayList<ServerMsg>> chatHistory;
+    protected String clientMsg;
 
-    private List<ServerMsg> invitedList;
-    private List<Integer> availableRoomList;
-    private WebSocketHandler webSocketHandler;
-
-    private String clientMsg;
-    private HashMap<Integer, ArrayList<ServerMsg>> chatHistory;
-
+    protected WebSocketHandler webSocketHandler;
 
     public ClientComm() {
+        clear();
+    }
+
+    public void clear() {
+        this.token = null;
+        this.availableRoomList = new ArrayList<>();
+        this.invitedList = new ArrayList<>();
+        this.chatHistory = new HashMap<>();
     }
 
     public static void main(String[] args) {
@@ -52,17 +58,18 @@ public class ClientComm implements ClientCommInterface{
 
         System.out.println("\n==Test createRoom");
         comm.createRoom(comm.token);
-//
-//        System.out.println("\n==Test inv");
-//        comm.sendInvitation("token", "user2", 9732);
+
+        System.out.println("\n==Test inv");
+        comm.sendInvitation(comm.getToken(), "user", 8928);
 
         System.out.println("\n==Test send msg");
-        comm.sendMessage(comm.getToken(), "XXXXXXXXX", 3443);
+        comm.sendMessage(comm.getToken(), "XXXXXXXXX", 8928);
 
         System.out.println("====");
         System.out.println(comm.chatHistory);
 
     }
+
 
     @Override
     public void register(String username, String password) {
@@ -115,19 +122,11 @@ public class ClientComm implements ClientCommInterface{
                     this.username = username;
                     // get token
                     this.token = jsonObject.get(GlobalConfig.TOKEN).getAsString();
-                    // connect to websocket
-                    websocketConnection(this.token);
-
-                    // get room list and chat history
-                    this.availableRoomList = new ArrayList<>();
-                    this.chatHistory = new HashMap<>();
+                    // get room list
                     JsonArray jsonArray = jsonObject.get(GlobalConfig.ROOM_LIST).getAsJsonArray();
                     if (jsonArray != null) {
-                        for (JsonElement element : jsonArray) {
-                            int roomID = element.getAsInt();
-                            this.availableRoomList.add(roomID);
-                            getHistory(this.token, roomID);
-                        }
+                        for (JsonElement element : jsonArray)
+                            this.availableRoomList.add(element.getAsInt());
                     }
                 }
                 return;
@@ -177,9 +176,15 @@ public class ClientComm implements ClientCommInterface{
                         new JSONObject()
                                 .put(GlobalConfig.TOKEN, token)
                                 .toString());
+
                 Thread.sleep(500); // TODO wait notify
+
                 if (this.webSocketHandler.connected) {
-                    this.clientMsg = "Welcome to the chat room";
+                    // get room list and chat history
+                    for (int roomID : this.availableRoomList) {
+                        getHistory(this.token, roomID);
+                        this.clientMsg = "Welcome to the chat room";
+                    }
                     return;
                 }
             } catch (InterruptedException e) {
@@ -225,8 +230,74 @@ public class ClientComm implements ClientCommInterface{
 
     @Override
     public void sendInvitation(String token, String otherUsername, int roomID) {
-        //HttpRequest request = ClientHelper.parseSendInviteRequest(host, token, otherUsername, roomID);
-        //sendRequest(request);
+        for (int port: GlobalConfig.ROUTE_PORTS){
+            String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
+            HttpRequest request = ClientHelper.parseSendInviteRequest(host, token, otherUsername, roomID);
+            System.out.println("Request for sending message to server=" + host);
+
+            try {
+                // get response body
+                JsonObject jsonObject = getResponseValue(request);
+
+                // validate response format
+                if (!ClientHelper.isValidResponse(GlobalConfig.INVITE_PROTOCOL, jsonObject))
+                    throw new RequestFailureException("Server response error" + jsonObject);
+
+                // valid response
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                if (isSucceed(jsonObject)) {}
+                return;
+
+            } catch (RequestFailureException re){
+                System.out.println("Error=" + re.getMessage());
+                continue;   // try next port if failed
+            }
+        }
+        this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
+        return;
+    }
+
+    @Override
+    public void sendInvitationRsp(String token, int roomID, boolean accept) {
+        for (int port: GlobalConfig.ROUTE_PORTS){
+            String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
+            HttpRequest request = ClientHelper.parseSendInviteRspRequest(host, token, roomID, accept);
+            System.out.println("Request for sending message to server=" + host);
+
+            try {
+                // get response body
+                JsonObject jsonObject = getResponseValue(request);
+
+                // validate response format
+                if (!ClientHelper.isValidResponse(GlobalConfig.INVITATION_RSP_PROTOCOL, jsonObject))
+                    throw new RequestFailureException("Server response error" + jsonObject);
+
+                // valid response
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                if (isSucceed(jsonObject)) {
+
+                    // update invited list
+                    List<ServerMsg> serverMsgList = new ArrayList<>();
+                    for (ServerMsg msg: invitedList) {
+                        if (msg.getRoomId() != roomID) {
+                            serverMsgList.add(msg);
+                        }
+                    }
+                    invitedList = serverMsgList;
+
+                    //update chat history
+                    availableRoomList.add(roomID);
+                    getHistory(this.token, roomID);
+                }
+                return;
+
+            } catch (RequestFailureException re){
+                System.out.println("Error=" + re.getMessage());
+                continue;   // try next port if failed
+            }
+        }
+        this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
+        return;
     }
 
     @Override
@@ -322,6 +393,10 @@ public class ClientComm implements ClientCommInterface{
         return clientMsg;
     }
 
+    public void setClientMsg(String msg) {
+        this.clientMsg = msg;
+    }
+
     public List<Integer> getAvailableRoomList() {
         return availableRoomList;
     }
@@ -349,4 +424,9 @@ public class ClientComm implements ClientCommInterface{
     public String getUsername() {
         return username;
     }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
 }

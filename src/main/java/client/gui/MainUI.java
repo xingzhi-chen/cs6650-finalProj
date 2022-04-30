@@ -1,154 +1,118 @@
 package client.gui;
 
 import client.comm.ClientComm;
-import config.ServerMsg;
+import config.Log;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.Format;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimerTask;
 
-public class MainUI extends JFrame {
+public class MainUI extends JFrame{
+    protected CardLayout cardLayout;
     protected ClientComm comm;
+    protected JPanel mainPanel;
     protected LoginUI loginUI;
     protected ChatUI chatUI;
 
     public MainUI() {
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.comm = new ClientComm();
-        this.loginUI = new LoginUI(comm);
-        this.chatUI = new ChatUI(comm);
-    }
-
-    public void setLoginUI() {
-        this.loginUI.signupButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                comm.register(loginUI.usernameField.getText(), new String(loginUI.passwordField.getPassword()));
-                JOptionPane.showMessageDialog(loginUI.signupButton, comm.getClientMsg());
-            }
-        });
-
-        this.loginUI.loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                comm.login(loginUI.usernameField.getText(), new String(loginUI.passwordField.getPassword()));
-                if (comm.getWebSocketHandler().connected) {
-                    JOptionPane.showMessageDialog(loginUI.loginButton, "Connected");
-                    switchToChatPanel();
-                }
-                else
-                    JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
-            }
-        });
-
-        this.loginUI.setVisible(true);
-    }
-
-    public void setChatUI() {
-        this.chatUI.logOutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int input = JOptionPane.showConfirmDialog(chatUI.logOutButton,"Log out?", "Confirm", JOptionPane.OK_CANCEL_OPTION);
-                if (input == 0) { /// 0=ok, 2=cancel
-                    comm.setToken(null);
-                    switchToLoginPanel();
-                }
-            }
-        });
-
-        this.chatUI.createButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                comm.createRoom(comm.getToken());
-                JOptionPane.showMessageDialog(chatUI.createButton, comm.getClientMsg());
-                chatUI.availableRoomList.setListData(comm.getAvailableRoomList().toArray());
-            }
-        });
-
-        this.chatUI.sendButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(chatUI.availableRoomList.getSelectedValue() == null) {
-                    JOptionPane.showMessageDialog(chatUI.sendButton, "Please select a room to send message.");
-                } else {
-                    String msg = chatUI.newMessage.getText();
-                    int roomID = (int) chatUI.availableRoomList.getSelectedValue();
-                    comm.sendMessage(comm.getToken(), msg, roomID);
-                }
-            }
-        });
-
-        this.chatUI.availableRoomList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                int roomID = (int) chatUI.availableRoomList.getSelectedValue();
-                chatUI.roomIDLabel.setText("RoomID: " + roomID);
-                //chatUI.chatHistory.setListData(comm.getChatHistory().get(roomID).toArray());
-            }
-        });
-
-
-
-        updateChat();
-        this.chatUI.availableRoomList.setListData(comm.getAvailableRoomList().toArray());
-        this.chatUI.username.setText("Username: " + comm.getUsername());
-        this.chatUI.setVisible(true);
-    }
-
-    public void switchToChatPanel() {
-        getContentPane().removeAll();
-        getContentPane().add(this.chatUI.panelMain);
-        setChatUI();
-        getContentPane().revalidate();
-        getContentPane().repaint();
-    }
-
-    public void switchToLoginPanel() {
-        getContentPane().removeAll();
-        getContentPane().add(this.loginUI.panelMain);
-        setLoginUI();
-        getContentPane().revalidate();
-        getContentPane().repaint();
-    }
-
-    private void updateChat(){
-        Timer timer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (chatUI.availableRoomList.getSelectedValue() != null) {
-                    int roomID = (int) chatUI.availableRoomList.getSelectedValue();
-                    List<String> allMsgString = new ArrayList();
-                    for (ServerMsg msg: comm.getChatHistory().get(roomID)) {
-                        allMsgString.add(msgFormatter(msg));
-                    }
-                    chatUI.chatHistory.setListData(allMsgString.toArray());
-                }
-            }
-        });
-        timer.start();
-    }
-
-    private String msgFormatter(ServerMsg msg) {
-        Format format = new SimpleDateFormat("yyyy MM dd HH:mm:ss");
-        String d = format.format(new Date(msg.getTimestamp()));
-        return String.format("[%s] %s: %s", d, msg.getFromUser(), msg.getMsg());
+//        comm = new ClientComm();
+//        cardLayout = new CardLayout();
+//        mainPanel = new JPanel(cardLayout);
+//        loginUI = new LoginUI(comm);
+//        chatUI = new ChatUI(comm);
+//        mainPanel.add(loginUI, "loginUI");
+//        mainPanel.add(chatUI, "chatUI");
+//
+//        loginUI.loginButton.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                comm.login(loginUI.usernameField.getText(), new String(loginUI.passwordField.getPassword()));
+//                JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
+//
+//                comm.websocketConnection(comm.getToken());
+//                JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
+//
+//                if (comm.getWebSocketHandler().connected) {
+//                    cardLayout.show(mainPanel, "chatUI");
+//                }
+//            }
+//        });
+//
+//        chatUI.logOutButton.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                int input = JOptionPane.showConfirmDialog(chatUI.logOutButton, "Log out?", "Confirm", JOptionPane.OK_CANCEL_OPTION);
+//                if (input == 0) { /// 0=ok, 2=cancel
+//                    comm.setToken(null);
+//                    cardLayout.show(mainPanel, "loginUI");
+//                }
+//            }
+//        });
+//
+//        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        add(mainPanel);
+//        setSize(800,600);
+//        cardLayout.show(mainPanel, "loginUI");
+//        setVisible(true);
+//        pack();
     }
 
     public static void main(String[] args) throws InterruptedException {
         MainUI ui = new MainUI();
-
-        ui.getContentPane().add(ui.loginUI.panelMain);
-        ui.setLoginUI();
-        ui.setVisible(true);
-        ui.pack();
+        ui.displayGUI();
     }
 
+    private void displayGUI() {
+        JFrame frame = new JFrame("Chat App");
+        frame.setSize(800, 600);
+
+        ClientComm comm = new ClientComm();
+        LoginUI loginUI = new LoginUI(comm);
+        ChatUI chatUI = new ChatUI(comm);
+
+        frame.setContentPane(loginUI.panelMain);
+
+        loginUI.loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                comm.login(loginUI.usernameField.getText(), new String(loginUI.passwordField.getPassword()));
+                JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
+
+                comm.websocketConnection(comm.getToken());
+                JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
+
+                if (comm.getWebSocketHandler().connected) {
+                    chatUI.availableRoomList.setListData(comm.getAvailableRoomList().toArray());
+                    chatUI.username.setText("Username: " + comm.getUsername());
+
+                    frame.getContentPane().removeAll();
+                    frame.setContentPane(chatUI.panelMain);
+                    frame.getContentPane().revalidate();
+                    frame.setSize(800, 600);
+                    frame.getContentPane().repaint();
+                }
+            }
+        });
+
+        chatUI.logOutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int input = JOptionPane.showConfirmDialog(chatUI.logOutButton, "Log out?", "Confirm", JOptionPane.OK_CANCEL_OPTION);
+                if (input == 0) { /// 0=ok, 2=cancel
+                    comm.clear();
+
+                    frame.getContentPane().removeAll();
+                    frame.setContentPane(loginUI.panelMain);
+                    frame.getContentPane().revalidate();
+                    frame.setSize(800, 600);
+                    frame.getContentPane().repaint();
+                }
+            }
+        });
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+        frame.pack();
+    }
 }
