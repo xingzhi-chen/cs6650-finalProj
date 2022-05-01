@@ -8,6 +8,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import config.GlobalConfig;
+import config.Log;
 import config.ServerMsg;
 import org.json.JSONObject;
 
@@ -30,18 +31,22 @@ public class ClientComm implements ClientCommInterface{
     protected List<Integer> availableRoomList;
     protected HashMap<Integer, ArrayList<ServerMsg>> chatHistory;
     protected String clientMsg;
+    protected Integer wsPort;
+    protected Integer routePort;
 
     protected WebSocketHandler webSocketHandler;
 
     public ClientComm() {
-        clear();
+        initComm();
     }
 
-    public void clear() {
-        this.token = null;
+    public void initComm() {
+        this.token = "";
+        this.username = "";
         this.availableRoomList = new ArrayList<>();
         this.invitedList = new ArrayList<>();
         this.chatHistory = new HashMap<>();
+        this.webSocketHandler = null;
     }
 
     public static void main(String[] args) {
@@ -54,47 +59,50 @@ public class ClientComm implements ClientCommInterface{
         comm.login("user", "password");
 
         System.out.println("\n==Test ws");
-        comm.websocketConnection(comm.getToken());
+        comm.websocketConnection(comm.token);
 
         System.out.println("\n==Test createRoom");
         comm.createRoom(comm.token);
 
-        System.out.println("\n==Test inv");
-        comm.sendInvitation(comm.getToken(), "user", 8928);
-
-        System.out.println("\n==Test send msg");
-        comm.sendMessage(comm.getToken(), "XXXXXXXXX", 8928);
-
-        System.out.println("====");
-        System.out.println(comm.chatHistory);
+//        System.out.println("\n==Test inv");
+//        comm.sendInvitation(comm.getToken(), "user", 8928);
+//
+//        System.out.println("\n==Test send msg");
+//        comm.sendMessage(comm.getToken(), "XXXXXXXXX", 8928);
+//
+//        System.out.println("====");
+//        System.out.println(comm.chatHistory);
 
     }
 
 
     @Override
     public void register(String username, String password) {
+
         for (int port: GlobalConfig.LOGIN_PORTS){
-                String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
-                HttpRequest request = ClientHelper.parseRegisterRequest(host, username, password);
-                System.out.println("Request for sign up to server=" + host);
 
-                try {
-                    // get response body
-                    JsonObject jsonObject = getResponseValue(request);
+            // set request
+            String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
+            HttpRequest request = ClientHelper.parseRegisterRequest(host, username, password);
+            Log.Info("Send register request to server=" + host);
 
-                    // validate response format
-                    if (!ClientHelper.isValidResponse(GlobalConfig.REGISTER_PROTOCOL, jsonObject))
-                        throw new RequestFailureException("Server response error" + jsonObject);
+            try {
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                    // valid response
-                    this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
-                    if (isSucceed(jsonObject)) {}
-                    return;
+                // validate response
+                if (!isValid(jsonObject))
+                    throw new RequestFailureException("Server response error" + jsonObject);
 
-                } catch (RequestFailureException re){
-                    System.out.println("Error=" + re.getMessage());
-                    continue;   // try next port if failed
-                }
+                // process valid response
+                if (isSucceed(jsonObject)) {}
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                return;
+
+            } catch (RequestFailureException re){
+                Log.Error("Error=" + re.getMessage());
+                continue;   // try next port if failed
+            }
         }
         this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
         return;
@@ -103,36 +111,37 @@ public class ClientComm implements ClientCommInterface{
     @Override
     public void login(String username, String password) {
         for (int port: GlobalConfig.LOGIN_PORTS){
+
+            //set request
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseLoginRequest(host, username, password);
-            System.out.println("Request for login in to server=" + host);
+            Log.Info("Send login request to server=" + host);
             try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.LOGIN_PROTOCOL, jsonObject))
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
-
-                if (isSucceed(jsonObject)) {
+                // process valid response
+                if (isSucceed(jsonObject) && jsonObject.has(GlobalConfig.TOKEN) && jsonObject.has(GlobalConfig.ROOM_LIST))  {
                     // store username
                     this.username = username;
-                    // get token
+                    // store token
                     this.token = jsonObject.get(GlobalConfig.TOKEN).getAsString();
-                    // get room list
+                    // retrieve room list
                     JsonArray jsonArray = jsonObject.get(GlobalConfig.ROOM_LIST).getAsJsonArray();
                     if (jsonArray != null) {
                         for (JsonElement element : jsonArray)
                             this.availableRoomList.add(element.getAsInt());
                     }
                 }
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
 
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -148,38 +157,45 @@ public class ClientComm implements ClientCommInterface{
             return;
         }
 
-        for (int port: GlobalConfig.WEBSOCKET_PORTS) { // Try different websocket ports
+        for (int i=0; i<GlobalConfig.WEBSOCKET_PORTS.size(); i++) { // Try different websocket ports
+            int port = GlobalConfig.WEBSOCKET_PORTS.get(i);
             String host = String.format("ws://%s:%s", GlobalConfig.IP_ADDRESS, port);
             webSocketHandler = new WebSocketHandler(URI.create(host)) {
                 @Override
                 public void onMessage(String s) {
-                    System.out.println("msg=" + s);
+                    Log.Info("msg=" + s);
                     ServerMsg serverMsg = new ServerMsg(s);
-                    if (serverMsg.getMsgType() == GlobalConfig.SYSTEM) {
-                        clientMsg = GlobalConfig.errorMsg.get(Integer.valueOf(serverMsg.getMsg()));
-                        if (Integer.valueOf(serverMsg.getMsg()).equals(GlobalConfig.SUCCESS))
-                            this.connected = true;
-                    } else if (serverMsg.getMsgType() == GlobalConfig.CHAT) {
-                        chatHistory.get(serverMsg.getRoomId()).add(serverMsg);
-                    } else if (serverMsg.getMsgType() == GlobalConfig.INVITATION) {
-                        invitedList.add(serverMsg);
-                    } else {
-                        clientMsg = "Cannot resolve websocket message from server.";
+                    int msgType = serverMsg.getMsgType();
+                    switch (msgType) {
+                        case GlobalConfig.SYSTEM:
+                            clientMsg = GlobalConfig.errorMsg.get(Integer.valueOf(serverMsg.getMsg()));
+                            if (Integer.valueOf(serverMsg.getMsg()).equals(GlobalConfig.SUCCESS))
+                                this.connected = true;
+                            break;
+                        case GlobalConfig.CHAT:
+                            chatHistory.get(serverMsg.getRoomId()).add(serverMsg);
+                            break;
+                        case GlobalConfig.INVITATION:
+                            invitedList.add(serverMsg);
+                            break;
+                        default:
+                            clientMsg = "Cannot resolve websocket message from server.";
                     }
                 }
             };
 
             try {
                 webSocketHandler.connectBlocking(GlobalConfig.SERVER_TIMEOUT, MILLISECONDS);
-                System.out.println("Verify token..." + token);
-                webSocketHandler.send(
-                        new JSONObject()
-                                .put(GlobalConfig.TOKEN, token)
-                                .toString());
-
-                Thread.sleep(500); // TODO wait notify
+                Log.Info("Verify token..." + token);
+                webSocketHandler.send(new JSONObject().put(GlobalConfig.TOKEN, token).toString());
+                Thread.sleep(1000);
 
                 if (this.webSocketHandler.connected) {
+
+                    // save ws port number
+                    this.wsPort = GlobalConfig.WEBSOCKET_PORTS.get(i);
+                    this.routePort = GlobalConfig.ROUTE_PORTS.get(i);
+
                     // get room list and chat history
                     for (int roomID : this.availableRoomList) {
                         getHistory(this.token, roomID);
@@ -188,7 +204,7 @@ public class ClientComm implements ClientCommInterface{
                     return;
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.Error("Error occurs while verifying the token: " + e);
                 this.clientMsg = ClientHelper.GENERAL_ERROR_MSG;
                 continue;
             }
@@ -198,29 +214,32 @@ public class ClientComm implements ClientCommInterface{
     @Override
     public void createRoom(String token) {
         for (int port: GlobalConfig.ROUTE_PORTS){
+
+            // set response
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseCreateRoomRequest(host, token);
-            System.out.println("Request for create room to server=" + host);
-            try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+            Log.Info("Send create room request to server=" + host);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.CREATE_ROOM_PROTOCOL, jsonObject))
+            try {
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
+
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
-
-                if (isSucceed(jsonObject)) {
+                // process valid response
+                if (isSucceed(jsonObject)  && jsonObject.has(GlobalConfig.ROOM_ID)) {
                     int roomID = jsonObject.get(GlobalConfig.ROOM_ID).getAsInt();
                     this.availableRoomList.add(roomID);
                     this.chatHistory.put(roomID, new ArrayList<>());
                 }
+
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
 
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -231,25 +250,28 @@ public class ClientComm implements ClientCommInterface{
     @Override
     public void sendInvitation(String token, String otherUsername, int roomID) {
         for (int port: GlobalConfig.ROUTE_PORTS){
+
+            // set request
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseSendInviteRequest(host, token, otherUsername, roomID);
-            System.out.println("Request for sending message to server=" + host);
+            Log.Info("Send invitation request to server=" + host);
 
             try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.INVITE_PROTOCOL, jsonObject))
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                // process valid response
                 if (isSucceed(jsonObject)) {}
+
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
 
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -260,20 +282,21 @@ public class ClientComm implements ClientCommInterface{
     @Override
     public void sendInvitationRsp(String token, int roomID, boolean accept) {
         for (int port: GlobalConfig.ROUTE_PORTS){
+
+            // set request
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseSendInviteRspRequest(host, token, roomID, accept);
-            System.out.println("Request for sending message to server=" + host);
+            Log.Info("Send invitation response to server=" + host);
 
             try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.INVITATION_RSP_PROTOCOL, jsonObject))
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                // process valid response
                 if (isSucceed(jsonObject)) {
 
                     // update invited list
@@ -285,14 +308,16 @@ public class ClientComm implements ClientCommInterface{
                     }
                     invitedList = serverMsgList;
 
-                    //update chat history
+                    // update chat history
                     availableRoomList.add(roomID);
                     getHistory(this.token, roomID);
                 }
+
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
 
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -303,25 +328,27 @@ public class ClientComm implements ClientCommInterface{
     @Override
     public void sendMessage(String token, String message, int roomID) {
         for (int port: GlobalConfig.ROUTE_PORTS){
+
+            //set request
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseSendMsgRequest(host, token, message, roomID);
-            System.out.println("Request for sending message to server=" + host);
+            Log.Info("Send send message request to server=" + host);
 
             try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.SEND_MSG_PROTOCOL, jsonObject))
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
+                // process valid response
                 if (isSucceed(jsonObject)) {}
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
 
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -330,23 +357,24 @@ public class ClientComm implements ClientCommInterface{
     }
 
     public void getHistory(String token, int roomID) {
+
         for (int port: GlobalConfig.ROUTE_PORTS){
+
+            // set request
             String host = String.format("http://%s:%s", GlobalConfig.IP_ADDRESS, port);
             HttpRequest request = ClientHelper.parseGetChatHistoryRequest(host, token, roomID);
-            System.out.println("Request for getting chat history to server=" + host);
+            Log.Info("Send get history request to server=" + host);
 
             try {
-                // get response body
-                JsonObject jsonObject = getResponseValue(request);
+                // get response
+                JsonObject jsonObject = ClientHelper.getResponseValue(request);
 
-                // validate response format
-                if (!ClientHelper.isValidResponse(GlobalConfig.GET_HISTORY_PROTOCOL, jsonObject))
+                // validate response
+                if (!isValid(jsonObject))
                     throw new RequestFailureException("Server response error" + jsonObject);
 
-                // valid response
-                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
-                if (isSucceed(jsonObject)) {
-
+                // process valid response
+                if (isSucceed(jsonObject) && jsonObject.has(GlobalConfig.HISTORY)) {
                     JsonArray jsonArray = jsonObject.get(GlobalConfig.HISTORY).getAsJsonArray();
                     ArrayList<ServerMsg> history = new ArrayList<>();
                     if (jsonArray != null) {
@@ -355,12 +383,15 @@ public class ClientComm implements ClientCommInterface{
                             history.add(serverMsg);
                         }
                     }
-                    history.add(new ServerMsg(GlobalConfig.CHAT, "", roomID, "============"));
+                    if (history.size() != 0)
+                        history.add(new ServerMsg(GlobalConfig.CHAT, "", roomID, "===CHAT HISTORY==="));
                     this.chatHistory.put(roomID, history);
                 }
+
+                this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();
                 return;
             } catch (RequestFailureException re){
-                System.out.println("Error=" + re.getMessage());
+                Log.Error("Error=" + re.getMessage());
                 continue;   // try next port if failed
             }
         }
@@ -368,24 +399,15 @@ public class ClientComm implements ClientCommInterface{
         return;
     }
 
-    private JsonObject getResponseValue(HttpRequest request) throws RequestFailureException{
-        try {
-            HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response=" + response.body());
-            return (JsonObject) new Gson().fromJson(response.body(), JsonElement.class);
-        } catch (HttpTimeoutException e) {
-            e.printStackTrace();
-            throw new RequestFailureException("Http server time out.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RequestFailureException(e.getMessage());
-        }
+
+    public boolean isValid(JsonObject jsonObject) {
+        return jsonObject != null &&
+                jsonObject.has(GlobalConfig.RES_CODE) &&
+                jsonObject.has(GlobalConfig.MESSAGE);
     }
 
     public boolean isSucceed(JsonObject jsonObject) {
-        return jsonObject.has(GlobalConfig.RES_CODE) &&
-                jsonObject.has(GlobalConfig.MESSAGE) &&
+        return isValid(jsonObject) &&
                 jsonObject.get(GlobalConfig.RES_CODE).getAsInt() == (GlobalConfig.SUCCESS);
     }
 

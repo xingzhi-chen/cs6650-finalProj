@@ -1,5 +1,6 @@
 package client.comm;
 
+import config.Log;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -16,22 +17,21 @@ public class WebSocketHandler extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        System.out.println("Connected to ChatServer: " + getURI());
+        Log.Info("Connected to ChatServer: " + getURI());
     }
 
     @Override
     public void onMessage(String s) {
-        System.out.println("new msg: " + s);
+        Log.Info("new msg: " + s);
     }
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        System.out.println("Disconnect from ChatServer: " + getURI());
+        Log.Info("Disconnect from ChatServer: " + getURI());
     }
 
     @Override
     public void onError(Exception e) {
-        e.printStackTrace();
-        System.out.println("Exception occurred: " + e);
+        Log.Error("Exception occurred: " + e);
     }
 }

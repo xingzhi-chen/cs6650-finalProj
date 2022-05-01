@@ -20,22 +20,34 @@ public class LoginUI extends JPanel{
 
     public LoginUI(ClientComm comm) {
         this.comm = comm;
-        setSignupButton();
+        //setSignupButton();
         //setLoginButton();
     }
 
+    public void initComponents() {
+        setSignupButton();
+    }
+
     public void setSignupButton () {
-        this.signupButton.addActionListener(new ActionListener() {
+        signupButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                String username = usernameField.getText();
+                String password = new String(passwordField.getPassword());
+                if (password.length() < 4) {
+                    JOptionPane.showMessageDialog(signupButton, "Password must be at least four characters long");
+                    return;
+                }
                 comm.register(usernameField.getText(), new String(passwordField.getPassword()));
                 JOptionPane.showMessageDialog(signupButton, comm.getClientMsg());
+                usernameField.setText(null);
+                passwordField.setText(null);
             }
         });
     }
 
     public void setLoginButton () {
-        this.loginButton.addActionListener(new ActionListener() {
+        loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 comm.login(usernameField.getText(), new String(passwordField.getPassword()));

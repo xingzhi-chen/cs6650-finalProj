@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
+import java.util.Vector;
 
 public class ChatUI extends JPanel {
     protected JList chatHistory;
@@ -36,15 +37,22 @@ public class ChatUI extends JPanel {
     private JPanel R3Unit;
 
     protected ClientComm comm;
+    protected Timer chatRoomTimer;
+    protected Timer invitedTimer;
 
     public ChatUI(ClientComm comm) {
         this.comm = comm;
+        //initComponents();
+    }
+
+    public void initComponents() {
         //setLogOutButton();
         setSendButton();
         setCreateButton();
         setAcceptButton();
         setRejectButton();
         setInviteButton();
+        setInputFocus();
         setInputField();
         setChatUpdate();
         setInviteUpdate();
@@ -77,6 +85,7 @@ public class ChatUI extends JPanel {
                     if (! comm.getClientMsg().equals("success"))
                         JOptionPane.showMessageDialog(sendButton, comm.getClientMsg());
                 }
+                newMessage.setText(null);
             }
         });
     }
@@ -141,20 +150,18 @@ public class ChatUI extends JPanel {
 
                     if (! comm.getClientMsg().equals("success"))
                         JOptionPane.showMessageDialog(inviteButton, comm.getClientMsg());
-
                 } catch (NumberFormatException ne) {
                     JOptionPane.showMessageDialog(inviteButton, "Please enter a valid user and a valid room ID number.");
                 }
+                usernameSearch.setText("username");
+                usernameSearch.setForeground(new Color(150, 150, 150));
+                roomIDSearch.setText("roomID");
+                roomIDSearch.setForeground(new Color(150, 150, 150));
             }
         });
     }
 
-    public void setInputField() {
-        if (usernameSearch.getText().length() == 0) {
-            usernameSearch.setText("username");
-            usernameSearch.setForeground(new Color(150, 150, 150));
-        }
-
+    public void setInputFocus() {
         usernameSearch.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -164,15 +171,9 @@ public class ChatUI extends JPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
-//                usernameSearch.setText("username");
-//                usernameSearch.setForeground(new Color(150, 150, 150));
+                usernameSearch.setForeground(new Color(150, 150, 150));
             }
         });
-
-        if (roomIDSearch.getText().length() == 0) {
-            roomIDSearch.setText("roomID");
-            roomIDSearch.setForeground(new Color(150, 150, 150));
-        }
 
         roomIDSearch.addFocusListener(new FocusListener() {
             @Override
@@ -183,15 +184,9 @@ public class ChatUI extends JPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
-//                roomIDSearch.setText("roomID");
-//                roomIDSearch.setForeground(new Color(150, 150, 150));
+                roomIDSearch.setForeground(new Color(150, 150, 150));
             }
         });
-
-        if (newMessage.getText().length() == 0) {
-            newMessage.setText("New Message...");
-            newMessage.setForeground(new Color(150, 150, 150));
-        }
 
         newMessage.addFocusListener(new FocusListener() {
             @Override
@@ -202,14 +197,30 @@ public class ChatUI extends JPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
-//                newMessage.setText("New Message...");
-//                newMessage.setForeground(new Color(150, 150, 150));
+                newMessage.setForeground(new Color(150, 150, 150));
             }
         });
     }
 
+    public void setInputField() {
+        if (usernameSearch.getText().length() == 0) {
+            usernameSearch.setText("username");
+            usernameSearch.setForeground(new Color(150, 150, 150));
+        }
+
+        if (roomIDSearch.getText().length() == 0) {
+            roomIDSearch.setText("roomID");
+            roomIDSearch.setForeground(new Color(150, 150, 150));
+        }
+
+        if (newMessage.getText().length() == 0) {
+            newMessage.setText("New Message...");
+            newMessage.setForeground(new Color(150, 150, 150));
+        }
+    }
+
     public void setChatUpdate() {
-        Timer timer = new Timer(500, new ActionListener() {
+        chatRoomTimer = new Timer(500, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
 
@@ -222,18 +233,31 @@ public class ChatUI extends JPanel {
                 }
             }
         });
-        timer.start();
     }
 
     public void setInviteUpdate() {
-        Timer timer = new Timer(3000, new ActionListener() {
+        invitedTimer = new Timer(500, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                int selectedIdx = invitedRoomList.getSelectedIndex();
+
                 List<ServerMsg> invitedList = comm.getInvitedList();
                 invitedRoomList.setListData(UIFormatter.formatInvitedRoom(invitedList).toArray());
+
+                if (selectedIdx != -1 && invitedList.size() > selectedIdx)
+                    invitedRoomList.setSelectedIndex(selectedIdx);
             }
         });
-        timer.start();
+    }
+
+    public void cleanup() {
+        availableRoomList.setListData(new Vector());
+        invitedRoomList.setListData(new Vector());
+        chatHistory.setListData(new Vector());
+        username.setText("Username: ");
+        newMessage.setText("");
+        chatRoomTimer.stop();
+        invitedTimer.stop();
     }
 
     public static void main(String[] args) {

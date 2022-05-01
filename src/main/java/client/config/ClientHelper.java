@@ -1,11 +1,17 @@
 package client.config;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import config.GlobalConfig;
+import config.Log;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 
 
@@ -109,27 +115,18 @@ public class ClientHelper {
                 .build();
     }
 
-    public static boolean isValidResponse(String protocol, JsonObject jsonObject){
-        if (jsonObject == null || !jsonObject.has(GlobalConfig.RES_CODE) || !jsonObject.has(GlobalConfig.MESSAGE))
-            return false;
-        if (jsonObject.get(GlobalConfig.RES_CODE).getAsInt() != GlobalConfig.SUCCESS)
-            return true;
-
-        switch (protocol) {
-            case GlobalConfig.REGISTER_PROTOCOL:
-                return jsonObject.has(GlobalConfig.USERNAME);
-            case GlobalConfig.LOGIN_PROTOCOL:
-                return jsonObject.has(GlobalConfig.TOKEN) && jsonObject.has(GlobalConfig.ROOM_LIST);
-            case GlobalConfig.CREATE_ROOM_PROTOCOL:
-                return jsonObject.has(GlobalConfig.ROOM_ID);
-            case GlobalConfig.GET_HISTORY_PROTOCOL:
-                return jsonObject.has(GlobalConfig.HISTORY);
-            case GlobalConfig.SEND_MSG_PROTOCOL:
-            case GlobalConfig.INVITE_PROTOCOL:
-            case GlobalConfig.INVITATION_RSP_PROTOCOL:
-                return true;
-            default:
-                return false;
+    public static JsonObject getResponseValue(HttpRequest request) throws RequestFailureException{
+        try {
+            HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            Log.Info("Response=" + response.body());
+            return (JsonObject) new Gson().fromJson(response.body(), JsonElement.class);
+        } catch (HttpTimeoutException e) {
+            //e.printStackTrace();
+            throw new RequestFailureException("Http server time out.");
+        } catch (Exception e) {
+            //e.printStackTrace();
+            throw new RequestFailureException(e.getMessage());
         }
     }
 }
