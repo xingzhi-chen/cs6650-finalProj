@@ -309,8 +309,10 @@ public class ClientComm implements ClientCommInterface{
                     invitedList = serverMsgList;
 
                     // update chat history
-                    availableRoomList.add(roomID);
-                    getHistory(this.token, roomID);
+                    if (accept) {
+                        availableRoomList.add(roomID);
+                        getHistory(this.token, roomID);
+                    }
                 }
 
                 this.clientMsg = jsonObject.get(GlobalConfig.MESSAGE).getAsString();

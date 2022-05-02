@@ -35,4 +35,16 @@ public class UIFormatter {
     public static String serverMsgToInvitedRoomMsg(ServerMsg msg){
         return String.format("New Invite! RoomID: %s (From user: %s)}", msg.getRoomId(), msg.getFromUser());
     }
+
+    public static List<String> formatAvailableRoom(List<Integer> roomIDList) {
+        List<String> list = new ArrayList<>();
+        for (int roomID: roomIDList) {
+            list.add(roomIDToAvailableRoom(roomID));
+        }
+        return list;
+    }
+
+    public static String roomIDToAvailableRoom(int roomID){
+        return String.format("RoomID: %s", roomID);
+    }
 }

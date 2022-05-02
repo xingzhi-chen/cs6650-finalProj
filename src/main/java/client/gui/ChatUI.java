@@ -95,7 +95,7 @@ public class ChatUI extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 comm.createRoom(comm.getToken());
-                availableRoomList.setListData(comm.getAvailableRoomList().toArray()); // update available room list
+                availableRoomList.setListData(UIFormatter.formatAvailableRoom(comm.getAvailableRoomList()).toArray()); // update available room list
 
                 if (! comm.getClientMsg().equals("success"))
                     JOptionPane.showMessageDialog(createButton, comm.getClientMsg());
@@ -114,7 +114,7 @@ public class ChatUI extends JPanel {
                     int roomID = comm.getInvitedList().get(roomIDIdx).getRoomId();
                     comm.sendInvitationRsp(comm.getToken(), roomID, true);
                     invitedRoomList.setListData(UIFormatter.formatInvitedRoom(comm.getInvitedList()).toArray());  // update invited room list
-                    availableRoomList.setListData(comm.getAvailableRoomList().toArray());
+                    availableRoomList.setListData(UIFormatter.formatAvailableRoom(comm.getAvailableRoomList()).toArray());
                 }
             }
         });
@@ -230,6 +230,7 @@ public class ChatUI extends JPanel {
                     List<ServerMsg> msgList= comm.getChatHistory().get(roomID);
                     List<String> msgString = UIFormatter.formatChat(msgList);
                     chatHistory.setListData(msgString.toArray());
+                    roomIDLabel.setText("RoomID: " + roomID);
                 }
             }
         });
