@@ -7,7 +7,7 @@ We use bash scripts to start the servers and client, monitor the liveliness and 
 1. Start the servers:
    1. There are 4 parts in the server cluster: database, route, login service, room service. Each part contains multiple servers
    2. First, use './run_rmiregistry.sh' to start the RMI registry for internal service. You might need to wait for a few seconds before starting the servers.
-   3. Second, run './build.sh' to build the project 
+   3. Second, run './build.sh' to build the project.
    4. Then, use './start_cluster.sh' to start all servers in the 4 parts. The bash program then is responsible for keep all server processes alive, so do not close the terminal running the bash script.
    5. Ports 8080, 8081, 8082, 8083, 8090, 8091 may be used for HTTP listening, please make sure these ports are available.
 2. Start the client:
@@ -20,5 +20,4 @@ We use bash scripts to start the servers and client, monitor the liveliness and 
 
 
 Key design goals: scalability, concurrency, and transparency.
-
 Main distributed systems algorithms applied: Fault-tolerance, replicated database management, Distributed Consensus using PAXOS, and group communication.
