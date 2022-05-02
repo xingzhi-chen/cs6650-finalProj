@@ -168,6 +168,7 @@ do
     PID=${ROUTE_PID[$IDX]}
     PROC_INFO=$(ps -p $PID | awk 'NR==2')
     if [[ $PROC_INFO == "" ]]; then
+      sleep 11
       java -cp ."$JARS" -Djava.rmi.server.codebase=file:./ server.route.RouteServer "$i" 2>&1 | tee -a "$LOG" &
       PID=`expr $! - 1`
       ROUTE_PID[$IDX]=$PID

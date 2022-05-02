@@ -76,6 +76,4 @@ public class GlobalConfig {
 
     // host and ports
     public static final String IP_ADDRESS = "127.0.0.1";
-    public static final int ROUTE_SERVER_PORT = 8080;
-    public static final int LOGIN_SERVER_PORT = 8090;
 }
