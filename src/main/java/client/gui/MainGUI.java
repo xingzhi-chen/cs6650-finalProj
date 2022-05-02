@@ -1,6 +1,7 @@
 package client.gui;
 
 import client.comm.ClientComm;
+import client.config.UIFormatter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ public class MainGUI {
                 JOptionPane.showMessageDialog(loginUI.loginButton, comm.getClientMsg());
 
                 if (comm.getWebSocketHandler().connected) {
-                    chatUI.availableRoomList.setListData(comm.getAvailableRoomList().toArray());
+                    chatUI.availableRoomList.setListData(UIFormatter.formatAvailableRoom(comm.getAvailableRoomList()).toArray());
                     chatUI.username.setText("Username: " + comm.getUsername());
                     chatUI.setInputField();
                     chatUI.invitedTimer.start();

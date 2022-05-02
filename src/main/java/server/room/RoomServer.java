@@ -119,28 +119,31 @@ public class RoomServer implements RoomServerInterface {
     @Override
     public int receiveInvitation(String fromUser, String toUser, int roomID) throws RemoteException, NotBoundException {
         // check if the invitation is valid(if toUser exists and not in the room)
-        if (dbHelper.checkUsername(toUser) == ServerConfig.SERVER_ERROR) {
-            Log.Error("The invitation recipient does not exist with userID " + toUser);
+        if (dbHelper.checkUsername(toUser) == ServerConfig.ERROR_NO_EXIST ||
+                dbHelper.checkUsername(fromUser) == ServerConfig.ERROR_NO_EXIST) {
+            Log.Error("UserID " + toUser + " does not exist");
             return GlobalConfig.NO_MATCH;
-        } else if (dbHelper.getRoomAddress(roomID).getResCode() == ServerConfig.ERROR_NO_EXIST) {
+        }
+        if (dbHelper.getRoomAddress(roomID).getResCode() == ServerConfig.ERROR_NO_EXIST) {
             Log.Error("The invitation room does not exist with roomID " + roomID);
             return GlobalConfig.NO_ROOM;
-        } else if (roomUserListCache.get(roomID).contains(toUser)) {
+        }
+        if (roomUserListCache.get(roomID).contains(toUser)) {
             Log.Error("The invitation recipient " + toUser + " is already in the room " + roomID);
             return GlobalConfig.DUP_USER;
-        } else {
-            // invitation is valid, redirect message to route server
-            RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
-            String invitationMsg = new ServerMsg(GlobalConfig.INVITATION, fromUser, roomID,
-                    "You received a new invitation from " + fromUser + " to room " + roomID).toJSONString();
-            routeServer.sendMsgToClient(toUser, invitationMsg);
-            // add invitation to user invitation history
-            if (dbHelper.addInvitationHistory(toUser, roomID) == ServerConfig.SUCCESS) {
-                return GlobalConfig.SUCCESS;
-            } else {
-                return GlobalConfig.SERVER_ERROR;
-            }
         }
+        // invitation is valid, redirect message to route server
+        RouteServerInterface routeServer = (RouteServerInterface) registry.lookup(ServerConfig.RPC_ROUTE_NAME);
+        String invitationMsg = new ServerMsg(GlobalConfig.INVITATION, fromUser, roomID,
+                "You received a new invitation from " + fromUser + " to room " + roomID).toJSONString();
+        routeServer.sendMsgToClient(toUser, invitationMsg);
+        // add invitation to user invitation history
+        if (dbHelper.addInvitationHistory(toUser, roomID) == ServerConfig.SUCCESS) {
+            return GlobalConfig.SUCCESS;
+        } else {
+            return GlobalConfig.SERVER_ERROR;
+        }
+
     }
 
     @Override
