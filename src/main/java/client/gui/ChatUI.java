@@ -131,7 +131,7 @@ public class ChatUI extends JPanel {
                     int roomID = comm.getInvitedList().get(roomIDIdx).getRoomId();
                     comm.sendInvitationRsp(comm.getToken(), roomID, false);
                     invitedRoomList.setListData(UIFormatter.formatInvitedRoom(comm.getInvitedList()).toArray());  // update invited room list
-                    availableRoomList.setListData(comm.getAvailableRoomList().toArray());
+                    availableRoomList.setListData(UIFormatter.formatAvailableRoom(comm.getAvailableRoomList()).toArray());
                 }
             }
         });
@@ -256,6 +256,7 @@ public class ChatUI extends JPanel {
         invitedRoomList.setListData(new Vector());
         chatHistory.setListData(new Vector());
         username.setText("Username: ");
+        roomIDLabel.setText("RoomID: ");
         newMessage.setText("");
         chatRoomTimer.stop();
         invitedTimer.stop();
