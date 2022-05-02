@@ -22,7 +22,10 @@ We use bash scripts to start the servers and client, monitor the liveliness and 
 Key design goals: scalability, concurrency, and transparency.
 Main distributed systems algorithms applied: Fault-tolerance, replicated database management, Distributed Consensus using PAXOS, and group communication.
 
-### Login Portal
-![alt text](https://i.ibb.co/5jZbHp1/p1.png)
-### Chat Room Portal
-![alt text](https://i.ibb.co/bzYvJBg/p11.png)
+### Login & Chat Room Portal GUI
+<img src="https://i.ibb.co/5jZbHp1/p1.png" width=300 align=left>
+
+<img src="https://i.ibb.co/bzYvJBg/p11.png" width=500 align=left>
+
+
+
