@@ -151,8 +151,7 @@ public class ChatUI extends JPanel {
                         throw new NumberFormatException();
                     comm.sendInvitation(comm.getToken(), username, roomID);
 
-                    if (!comm.getClientMsg().equals("success"))
-                        JOptionPane.showMessageDialog(inviteButton, comm.getClientMsg());
+
                 } catch (NumberFormatException ne) {
                     JOptionPane.showMessageDialog(inviteButton, "Please enter a valid user and a valid room ID number.");
                 }
