@@ -23,6 +23,6 @@ Key design goals: scalability, concurrency, and transparency.
 Main distributed systems algorithms applied: Fault-tolerance, replicated database management, Distributed Consensus using PAXOS, and group communication.
 
 ### Login Portal
-![alt text](https://ibb.co/2MJG4VF)
+![alt text](https://i.ibb.co/5jZbHp1/p1.png)
 ### Chat Room Portal
-![alt text](https://ibb.co/D5mMpCD)
+![alt text](https://i.ibb.co/bzYvJBg/p11.png)
