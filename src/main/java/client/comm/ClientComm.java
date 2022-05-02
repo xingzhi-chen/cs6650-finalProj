@@ -50,19 +50,19 @@ public class ClientComm implements ClientCommInterface{
     }
 
     public static void main(String[] args) {
-        ClientComm comm = new ClientComm();
-
-        System.out.println("\n==Test register==");
-        comm.register("user", "password");
-
-        System.out.println("\n==Test login==");
-        comm.login("user", "password");
-
-        System.out.println("\n==Test ws");
-        comm.websocketConnection(comm.token);
-
-        System.out.println("\n==Test createRoom");
-        comm.createRoom(comm.token);
+//        ClientComm comm = new ClientComm();
+//
+//        System.out.println("\n==Test register==");
+//        comm.register("user", "password");
+//
+//        System.out.println("\n==Test login==");
+//        comm.login("user", "password");
+//
+//        System.out.println("\n==Test ws");
+//        comm.websocketConnection(comm.token);
+//
+//        System.out.println("\n==Test createRoom");
+//        comm.createRoom(comm.token);
 
 //        System.out.println("\n==Test inv");
 //        comm.sendInvitation(comm.getToken(), "user", 8928);
@@ -182,26 +182,54 @@ public class ClientComm implements ClientCommInterface{
                             clientMsg = "Cannot resolve websocket message from server.";
                     }
                 }
+
+                @Override
+                public void onClose(int i, String s, boolean b) {
+                    Log.Info("Disconnect from ChatServer: " + getURI());
+                    this.connected = false;
+                    try {
+                        Thread.sleep(GlobalConfig.SERVER_TIMEOUT);
+                    } catch (InterruptedException ie) {
+
+                    }
+                    Log.Info("Try to connect again...");
+                    websocketConnection(token);
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.Error("Exception occurred: " + e);
+                    try {
+                        closeBlocking();
+                        Thread.sleep(GlobalConfig.SERVER_TIMEOUT);
+                    } catch (InterruptedException ie) {
+
+                    }
+                    Log.Info("Try to connect again...");
+                    websocketConnection(token);
+                }
             };
 
             try {
-                webSocketHandler.connectBlocking(GlobalConfig.SERVER_TIMEOUT, MILLISECONDS);
-                Log.Info("Verify token..." + token);
-                webSocketHandler.send(new JSONObject().put(GlobalConfig.TOKEN, token).toString());
-                Thread.sleep(1000);
+                boolean success = webSocketHandler.connectBlocking(GlobalConfig.SERVER_TIMEOUT, MILLISECONDS);
+                if(success) {
+                    Log.Info("Verify token..." + token);
+                    webSocketHandler.send(new JSONObject().put(GlobalConfig.TOKEN, token).toString());
+                    Thread.sleep(1000);
 
-                if (this.webSocketHandler.connected) {
+                    if (this.webSocketHandler.connected) {
 
-                    // save ws port number
-                    this.wsPort = GlobalConfig.WEBSOCKET_PORTS.get(i);
-                    this.routePort = GlobalConfig.ROUTE_PORTS.get(i);
+                        // save ws port number
+                        this.wsPort = GlobalConfig.WEBSOCKET_PORTS.get(i);
+                        this.routePort = GlobalConfig.ROUTE_PORTS.get(i);
 
-                    // get room list and chat history
-                    for (int roomID : this.availableRoomList) {
-                        getHistory(this.token, roomID);
-                        this.clientMsg = "Welcome to the chat room";
+                        // get room list and chat history
+                        for (int roomID : this.availableRoomList) {
+                            getHistory(this.token, roomID);
+                            this.clientMsg = "Welcome to the chat room";
+                        }
+                        return;
                     }
-                    return;
                 }
             } catch (InterruptedException e) {
                 Log.Error("Error occurs while verifying the token: " + e);
