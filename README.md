@@ -21,3 +21,8 @@ We use bash scripts to start the servers and client, monitor the liveliness and 
 
 Key design goals: scalability, concurrency, and transparency.
 Main distributed systems algorithms applied: Fault-tolerance, replicated database management, Distributed Consensus using PAXOS, and group communication.
+
+### Login Portal
+![alt text](https://ibb.co/2MJG4VF)
+### Chat Room Portal
+![alt text](https://ibb.co/D5mMpCD)
