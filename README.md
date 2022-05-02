@@ -18,5 +18,7 @@ We use bash scripts to start the servers and client, monitor the liveliness and 
    2. Use './stop_cluster.sh' to stop all servers running background
    3. Use './clear.sh' to clean the files created in /log and /target
 
-Key design goals: scalability, concurrency, and transparency 
+
+Key design goals: scalability, concurrency, and transparency.
+
 Main distributed systems algorithms applied: Fault-tolerance, replicated database management, Distributed Consensus using PAXOS, and group communication.
